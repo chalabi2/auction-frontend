@@ -1,22 +1,26 @@
 import { useEffect, useState } from 'react';
 import Head from 'next/head';
 import { useChain } from '@cosmos-kit/react';
-import { StdFee } from '@cosmjs/amino';
-import { SigningStargateClient } from '@cosmjs/stargate';
+
 import BigNumber from 'bignumber.js';
-import { auction } from '../node_modules/@chalabi/gravity-bridgejs/dist/codegen/index';
+import { auction} from '../node_modules/@chalabi/gravity-bridgejs/dist/codegen/index';
 import { Auction } from '@chalabi/gravity-bridgejs/dist/codegen/auction/v1/auction';
 import { getDenominationInfo, formatTokenAmount } from '../config/denoms';
-import { FaRegClock, FaSyncAlt } from 'react-icons/fa';
+import { FaSyncAlt } from 'react-icons/fa';
+
+import { createTxRaw } from '@gravity-bridge/proto';
 import {
-  Box,
-  Divider,
-  Grid,
+  generateEndpointBroadcast,
+  generatePostBodyBroadcast,
+} from '@gravity-bridge/provider';
+
+import {
+
   Heading,
   Text,
-  Stack,
+
   Container,
-  Link,
+
   Button,
   Flex,
   Icon,
@@ -30,7 +34,7 @@ import {
   Thead,
   Tr,
   Image,
-  Spinner,
+
   CircularProgress,
   CircularProgressLabel,
   useDisclosure,
@@ -39,75 +43,35 @@ import {
   ModalCloseButton,
   ModalContent,
   ModalHeader,
-  ModalOverlay
+  ModalOverlay,
+  Tooltip,
+  SkeletonText,
+  Skeleton,
+  Spacer
 } from '@chakra-ui/react';
 import { BsFillMoonStarsFill, BsFillSunFill } from 'react-icons/bs';
 import {
-  chainassets,
+
   chainName,
-  coin,
-  dependencies,
-  products,
+
 } from '../config';
 
-import { WalletStatus } from '@cosmos-kit/core';
+
 import {
-  Product,
-  Dependency,
   WalletSection,
   handleChangeColorModeValue,
 } from '../components';
-import { SendTokensCard } from '../components/react/send-tokens-card';
 
-import { cosmos } from 'interchain';
+
+import Long from 'long';
+import { createBidTransaction } from '../components/tx/bidOnAuctions';
+import { useQueryAccount } from '../components/tx/queryAccount';
+
 
 const gravitybridge = { auction };
 const createRPCQueryClient = gravitybridge.auction.ClientFactory.createRPCQueryClient;
 
-const library = {
-  title: 'Interchain',
-  text: 'Interchain',
-  href: 'https://github.com/cosmology-tech/interchain',
-};
 
-const sendTokens = (
-  getSigningStargateClient: () => Promise<SigningStargateClient>,
-  setResp: (resp: string) => any,
-  address: string
-) => {
-  return async () => {
-    const stargateClient = await getSigningStargateClient();
-    if (!stargateClient || !address) {
-      console.error('stargateClient undefined or address undefined.');
-      return;
-    }
-
-    const { send } = cosmos.bank.v1beta1.MessageComposer.withTypeUrl;
-
-    const msg = send({
-      amount: [
-        {
-          denom: coin.base,
-          amount: '1000',
-        },
-      ],
-      toAddress: address,
-      fromAddress: address,
-    });
-
-    const fee: StdFee = {
-      amount: [
-        {
-          denom: coin.base,
-          amount: '2000',
-        },
-      ],
-      gas: '86364',
-    };
-    const response = await stargateClient.signAndBroadcast(address, [msg], fee);
-    setResp(JSON.stringify(response, null, 2));
-  };
-};
 
 export default function Home() {
   const { colorMode, toggleColorMode } = useColorMode();
@@ -115,22 +79,46 @@ export default function Home() {
   const { getSigningStargateClient, address, status, getRpcEndpoint } =
     useChain(chainName);
 
-
   const [auctionData, setAuctionData] = useState<Auction[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [timer, setTimer] = useState(30);
 
-  
+   // State to store the remaining blocks and time
+   const [auctionTimer, setAuctionTimer] = useState({ remainingBlocks: 0, remainingTime: '' });
 
-  
-
+   // Function to fetch the current block height
+   const fetchCurrentBlockHeight = async () => {
+     const clientAuction = await createRPCQueryClient({ rpcEndpoint: 'https://nodes.chandrastation.com/rpc/gravity/' }); 
+     const currentHeightResponse = await clientAuction.cosmos.base.tendermint.v1beta1.getLatestBlock();
+     return currentHeightResponse?.block?.header?.height || 0;
+   };
+ 
+   // Function to calculate and update the auction timer
+   const fetchAuctionTimer = async () => {
+     const clientAuction = await createRPCQueryClient({ rpcEndpoint: 'https://nodes.chandrastation.com/rpc/gravity/' }); 
+     const times = await clientAuction.auction.v1.auctionPeriod();
+     const endBlockHeight = times.auctionPeriod?.endBlockHeight.toNumber() || 0;
+     const currentBlockHeight = await fetchCurrentBlockHeight();
+ 
+     const remainingBlocks = endBlockHeight - Number(currentBlockHeight);
+     const seconds = remainingBlocks * 6; // Assuming each block takes an average of 6 seconds
+     const formattedTime = new Date(seconds * 1000).toISOString().substr(11, 8);
+ 
+     setAuctionTimer({ remainingBlocks, remainingTime: formattedTime });
+   };
+ 
+   useEffect(() => {
+     fetchAuctionTimer(); // Call this function on component mount or when needed
+   }, []);
+   
   const fetchAuctions = async () => {
     const clientAuction = await createRPCQueryClient({ rpcEndpoint: 'https://nodes.chandrastation.com/rpc/gravity/' }); 
-
+   
     setIsLoading(true);
     try {
       // Fetch auctions
       const response = await clientAuction.auction.v1.auctions();
+      
       if (response && response.auctions) {
         setAuctionData(response.auctions);
       }
@@ -166,6 +154,21 @@ export default function Home() {
     onOpen();
   };
 
+  const formatBidAmount = (bidAmount: BigNumber.Value) => {
+    // Convert the bid amount to BigNumber for precise calculations
+    const amountInUgraviton = new BigNumber(bidAmount);
+  
+    // Convert ugraviton to graviton (1 graviton = 1,000,000 ugraviton)
+    const amountInGraviton = amountInUgraviton.dividedBy(1000000);
+  
+    // If the amount is less than 1,000,000 ugraviton, format it with up to 5 decimal places
+    if (amountInUgraviton.isLessThan(1000000)) {
+      return amountInGraviton.toFormat();
+    } else {
+      // For amounts equal or above 1,000,000 ugraviton, show whole number or decimal if present
+      return amountInGraviton.toFormat(amountInGraviton.decimalPlaces() > 0 ? amountInGraviton.decimalPlaces() : 0);
+    }
+  };
 
   const renderAuctionTable = () => (
     <TableContainer>
@@ -182,14 +185,18 @@ export default function Home() {
         {auctionData.map((auction, index) => {
           const denomInfo = getDenominationInfo(auction.amount?.denom ?? '');
           const formattedAmount = formatTokenAmount(auction.amount?.amount || '0', auction.amount?.denom || '');
+          const formatedBidAmount = formatBidAmount(auction.highestBid?.bidAmount || 0);
           return (
             <Tr key={index}
-            _hover={{ bg: 'gray.100', cursor: 'pointer' }}
+            _hover={{ 
+              bg: colorMode === 'light' ? 'gray.100' : 'rgba(255,255,255,0.1)', 
+              cursor: 'pointer' 
+            }}
                 onClick={() => handleRowClick(auction)}
                 >
               <Td>{auction.id.low}</Td>
               <Td>{formattedAmount} {denomInfo.symbol}</Td>
-              <Td>{auction.highestBid ? auction.highestBid.bidAmount.toString() : 'N/A'} </Td>
+              <Td>{auction.highestBid ? formatedBidAmount : 'No Bid'} {auction.highestBid ? 'GRAV' : ''}  </Td>
               <Td>{auction.highestBid?.bidderAddress} </Td>
             </Tr>
           );
@@ -216,14 +223,87 @@ export default function Home() {
         
             </>
           )}
-          <Button colorScheme="blue" mt={4}>Bid on this Auction</Button>
+          <Button   colorScheme="blue" mt={4}>Bid</Button>
         </ModalBody>
       </ModalContent>
     </Modal>
   );
+  
+  const { accountData, loading, error } = useQueryAccount(address);
 
+
+  // const handleBidClick = async () => {
+  //   if (!selectedAuction) return;
+  
+  //   // Call createBidTransaction to get the context and tx
+  //   const bidTransaction = createBidTransaction(
+  //     address,
+  //     selectedAuction.id.low,
+  //     3000000,  // replace with actual bid amount
+  //     2000000,  // replace with actual bid fee
+  //     accountData
+  //   );
+  
+  //   if (!bidTransaction) {
+  //     console.error("Failed to create transaction");
+  //     return;
+  //   }
+  
+  //   const { context, tx } = bidTransaction;
+  
+  //   try {
+  //     // Sign the transaction using Keplr
+  //     const signResponse = await window.keplr?.signDirect(
+  //       context.chain.cosmosChainId,
+  //       context.sender.accountAddress,
+  //       {
+  //         bodyBytes: tx.signDirect.body.toBinary(),
+  //         authInfoBytes: tx.signDirect.authInfo.toBinary(),
+  //         chainId: context.chain.cosmosChainId,
+  //         accountNumber: new Long(context.sender.accountNumber),
+  //       },
+  //     );
+  
+  //     if (!signResponse) throw new Error("Failed to sign the transaction");
+
+  //     const signatures = [
+  //       new Uint8Array(Buffer.from(signResponse.signature.signature, 'base64')),
+  //     ];
+
+  //     // Create the signed transaction
+  //     const signedTx = createTxRaw(
+  //       signResponse.signed.bodyBytes,
+  //       signResponse.signed.authInfoBytes,
+  //       signatures,
+  //     );
+
+  
+  //     const nodeUrl = "https://gravitychain.io:1317"
+
+  //     const postOptions = {
+  //       method: 'POST',
+  //       headers: { 'Content-Type': 'application/json' },
+  //       body: generatePostBodyBroadcast(signedTx),
+  //     }
+      
+  //     const broadcastEndpoint = `${nodeUrl}${generateEndpointBroadcast()}`
+  //     const broadcastPost = await fetch(
+  //       broadcastEndpoint,
+  //       postOptions,
+  //     )
+      
+  //     const response = await broadcastPost.json()
+  //     response()
+  //   } catch (error) {
+  //     console.error("Error during transaction signing or broadcasting:", error);
+  //     // ... error handling
+  //   }
+  // };
+  
+
+  
   return (
-    <Container maxW="5xl" py={10}>
+    <Container maxW="8xl" py={0}>
       <Head>
         <title>Gravity Bridge Fee Auction App</title>
         <meta name="description" content="Gravity Bridge Fee Auction App" />
@@ -233,21 +313,30 @@ export default function Home() {
       <Flex justifyContent="space-between" alignItems="center" mb={4}>
         <Image 
           height={"40px"}
-          src="https://github.com/Gravity-Bridge/Gravity-Bridge/raw/main/gravity-bridge.svg"
+          src={handleChangeColorModeValue(
+            colorMode,
+            "logolight.svg",
+            "logodark.svg",
+          )}
           alt="Gravity Bridge Logo"
         />
+     
+     <Heading
 
-        <Heading
-          as="h1"
-          fontSize={{ base: '3xl', md: '5xl' }}
-          fontWeight="bold"
-        >
-          Fee Auction
-        </Heading>
+         as="h1"
+         fontSize={{ base: '2xl', md: '2xl' }}
+         fontWeight="light"
+         letterSpacing={2}
+       >
+        FEE AUCTION
+       </Heading>
 
-       
+
+ <WalletSection/>
+
          
           <Button  variant="outline" p={0} onClick={toggleColorMode}>
+
             <Icon
               as={handleChangeColorModeValue(
                 colorMode,
@@ -256,16 +345,22 @@ export default function Home() {
               )}
             />
           </Button>
-       
-      </Flex>
-   
 
+      </Flex>
+
+
+   
+      <Container maxW="5xl" py={4}>
       <Flex justifyContent="space-between" alignItems="center">
-        <Heading as="h2" size="lg">Auction Table</Heading>
+        <Heading as="h2" size="lg" fontWeight={"light"} letterSpacing="4">Auction Table</Heading>
+        <Text>Time Remaining: {auctionTimer.remainingTime}</Text>
+      <Text>Blocks Remaining: {auctionTimer.remainingBlocks}</Text>
         <Flex alignItems="center">
+        <Tooltip label="Auction refetch timer" aria-label='A tooltip'>
           <CircularProgress value={(timer / 30) * 100} color="blue.400">
             <CircularProgressLabel>{timer}</CircularProgressLabel>
           </CircularProgress>
+          </Tooltip>
           <Button onClick={fetchAuctions} bgColor="transparent" ml={3}>
             <Icon as={FaSyncAlt} />
           </Button>
@@ -275,13 +370,15 @@ export default function Home() {
       <Center mt={8} mb={16}>
       {renderAuctionModal()}
         {isLoading ? (
-          <Spinner /> // Replace with your spinner component
+          <Skeleton mt="4" noOfLines={12}>
+          <SkeletonText spacing={12} /> 
+          </Skeleton>
         ) : (
           auctionData.length > 0 && renderAuctionTable()
         )}
       </Center>
 
-   
+      </Container>
  
     </Container>
   );

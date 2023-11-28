@@ -1,6 +1,6 @@
 {
   "name": "@cosmology/send-tokens",
-  "version": "3.0.0",
+  "version": "2.0.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -17,7 +17,7 @@
     "@chalabi/gravity-bridgejs": "^0.0.3",
     "@cosmjs/cosmwasm-stargate": "0.31.1",
     "@cosmjs/stargate": "0.31.1",
-    "@cosmos-kit/core": "^2.6.6",
+    "@cosmos-kit/core": "2.6.6",
     "@cosmos-kit/cosmostation": "2.3.11",
     "@cosmos-kit/keplr": "2.3.13",
     "@cosmos-kit/leap": "2.3.10",
@@ -28,14 +28,16 @@
     "@gravity-bridge/proto": "^0.0.5",
     "@gravity-bridge/provider": "^0.0.1",
     "@gravity-bridge/transactions": "^0.0.1",
+    "@swc/helpers": "^0.4.0",
     "bignumber.js": "9.1.0",
     "chain-registry": "1.20.0",
     "framer-motion": "9.0.7",
     "interchain": "^1.10.1",
-    "next": "12.2.5",
+    "next": "^13.3.0",
     "react": "18.2.0",
     "react-dom": "18.2.0",
-    "react-icons": "4.6.0"
+    "react-icons": "4.6.0",
+    "webpack": "^5.89.0"
   },
   "devDependencies": {
     "@types/node": "18.11.9",
