@@ -1,6 +1,6 @@
 {
   "name": "@cosmology/send-tokens",
-  "version": "1.8.5",
+  "version": "2.0.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -12,7 +12,7 @@
     "@chain-registry/types": "0.17.0",
     "@chakra-ui/icons": "2.0.12",
     "@chakra-ui/react": "2.5.1",
-    "@chalabi/gravity-bridgejs": "^0.0.2",
+    "@chalabi/gravity-bridgejs": "^0.0.3",
     "@cosmjs/cosmwasm-stargate": "0.31.1",
     "@cosmjs/stargate": "0.31.1",
     "@cosmos-kit/core": "2.6.6",
