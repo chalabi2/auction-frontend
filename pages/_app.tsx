@@ -8,21 +8,43 @@ import { wallets as cosmostationWallets } from '@cosmos-kit/cosmostation';
 import { wallets as leapWallets } from '@cosmos-kit/leap';
 
 import { assets, chains } from 'chain-registry';
-import { getSigningCosmosClientOptions } from 'interchain';
 
 import { SignerOptions } from '@cosmos-kit/core';
 import '@interchain-ui/react/styles';
+import { Chain } from '@chain-registry/types';
+import { gravityProtoRegistry, gravityAminoConverters, auctionAminoConverters, auctionProtoRegistry } from '@chalabi/gravity-bridgejs/dist/codegen';
+import { SigningStargateClientOptions, AminoTypes } from '@cosmjs/stargate';
+import { Registry } from '@cosmjs/proto-signing';
+import { getSigningCosmosClientOptions } from 'interchain';
+
+
 
 function CreateCosmosApp({ Component, pageProps }: AppProps) {
   const signerOptions: SignerOptions = {
-    signingStargate: () => {
-      return getSigningCosmosClientOptions();
+    signingStargate: (_chain: Chain): SigningStargateClientOptions | undefined => {
+      const registry = new Registry(auctionProtoRegistry);
+      const aminoTypes = new AminoTypes(auctionAminoConverters);
+      return {
+        aminoTypes: aminoTypes,
+        registry: registry,
+      };
     },
   };
+
+
+
 
   return (
     <ChakraProvider theme={defaultTheme}>
       <ChainProvider
+        endpointOptions={{
+          endpoints: {
+            gravitybridge: {
+              rpc: ['https://nodes.chandrastation.com/rpc/gravity/'],
+              rest: ['https://nodes.chandrastation.com/api/gravity/'],
+            }
+          }
+        }}
         chains={chains}
         assetLists={assets}
         wallets={[...keplrWallets, ...cosmostationWallets, ...leapWallets]}

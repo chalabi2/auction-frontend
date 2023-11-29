@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import Head from 'next/head';
 import { useChain } from '@cosmos-kit/react';
 import BigNumber from 'bignumber.js';
-import { auction} from '../node_modules/@chalabi/gravity-bridgejs/dist/codegen/index';
+import { auction, auctionAminoConverters, auctionProtoRegistry} from '../node_modules/@chalabi/gravity-bridgejs/dist/codegen/index';
 import { Auction } from '@chalabi/gravity-bridgejs/dist/codegen/auction/v1/auction';
 import { getDenominationInfo, formatTokenAmount } from '../config/denoms';
 import { FaSyncAlt } from 'react-icons/fa';
@@ -11,7 +11,10 @@ import {
   generateEndpointBroadcast,
   generatePostBodyBroadcast,
 } from '@gravity-bridge/provider';
-
+import { getSigningCosmosClient } from '../node_modules/@chalabi/gravity-bridgejs/dist/codegen/index';
+import { bidOnAuction } from '../components/tx/dead.bidOnAuction';
+import { getSigningAuctionClient } from '../node_modules/@chalabi/gravity-bridgejs/dist/codegen/index';
+import { Registry } from '@cosmjs/proto-signing';
 import {
 
   Heading,
@@ -63,8 +66,10 @@ import {
 
 
 import Long from 'long';
-import { createBidTransaction } from '../components/tx/bidOnAuctions';
+import { Chain, createBidTransaction } from '../components/tx/bidOnAuctions';
 import { useQueryAccount } from '../components/tx/queryAccount';
+import { SigningStargateClientOptions, AminoTypes } from '@cosmjs/stargate';
+import { SignerOptions } from '@cosmos-kit/core';
 
 
 const gravitybridge = { auction };
@@ -96,10 +101,10 @@ export default function Home() {
    const fetchAuctionTimer = async () => {
      const clientAuction = await createRPCQueryClient({ rpcEndpoint: 'https://nodes.chandrastation.com/rpc/gravity/' }); 
      const times = await clientAuction.auction.v1.auctionPeriod();
-     const endBlockHeight = times.auctionPeriod?.endBlockHeight.toNumber() || 0;
+     const endBlockHeight = times.auctionPeriod?.endBlockHeight.toString() || 0;
      const currentBlockHeight = await fetchCurrentBlockHeight();
  
-     const remainingBlocks = endBlockHeight - Number(currentBlockHeight);
+     const remainingBlocks = Number(endBlockHeight) - Number(currentBlockHeight);
      const seconds = remainingBlocks * 6; // Assuming each block takes an average of 6 seconds
      const formattedTime = new Date(seconds * 1000).toISOString().substr(11, 8);
  
@@ -153,6 +158,39 @@ export default function Home() {
     onOpen();
   };
 
+  const [response, setResponse] = useState('');
+
+  const signerOptions: SignerOptions = {
+    signingStargate: (_chain: Chain): SigningStargateClientOptions | undefined => {
+      const registry = new Registry(auctionProtoRegistry);
+      const aminoTypes = new AminoTypes(auctionAminoConverters);
+      return {
+        aminoTypes: aminoTypes,
+        registry: registry,
+      };
+    },
+  };
+
+  const handleBidClick = (auctionId: number, bidAmount: number, bidFeeAmount: number) => async (event: { preventDefault: () => void; stopPropagation: () => void; }) => {
+    event.preventDefault();
+    event.stopPropagation();
+  
+    try {
+      await bidOnAuction(
+        getSigningStargateClient,
+        signerOptions,
+        setResponse,
+        chainName ?? "",
+        address ?? "",
+        auctionId,
+        bidAmount,
+        bidFeeAmount
+      )();
+    } catch (error) {
+      console.error(error);
+    }
+  };
+  
   const formatBidAmount = (bidAmount: BigNumber.Value) => {
     // Convert the bid amount to BigNumber for precise calculations
     const amountInUgraviton = new BigNumber(bidAmount);
@@ -184,7 +222,7 @@ export default function Home() {
         {auctionData.map((auction, index) => {
           const denomInfo = getDenominationInfo(auction.amount?.denom ?? '');
           const formattedAmount = formatTokenAmount(auction.amount?.amount || '0', auction.amount?.denom || '');
-          const formatedBidAmount = formatBidAmount(auction.highestBid?.bidAmount || 0);
+          const formatedBidAmount = formatBidAmount(auction.highestBid?.bidAmount.toString() || 0);
           return (
             <Tr key={index}
             _hover={{ 
@@ -193,7 +231,7 @@ export default function Home() {
             }}
                 onClick={() => handleRowClick(auction)}
                 >
-              <Td>{auction.id.low}</Td>
+              <Td>{auction.id.toString()}</Td>
               <Td>{formattedAmount} {denomInfo.symbol}</Td>
               <Td>{auction.highestBid ? formatedBidAmount : 'No Bid'} {auction.highestBid ? 'GRAV' : ''}  </Td>
               <Td>{auction.highestBid?.bidderAddress} </Td>
@@ -205,6 +243,9 @@ export default function Home() {
     </TableContainer>
   );
 
+  const bidAmount = 1000000;
+  const bidFeeAmount = 400000;
+
   const renderAuctionModal = () => (
     <Modal isOpen={isOpen} onClose={onClose}>
       <ModalOverlay />
@@ -214,7 +255,7 @@ export default function Home() {
         <ModalBody>
           {selectedAuction && (
             <>
-              <Text>ID: {selectedAuction.id.low}</Text>
+              <Text>ID: {selectedAuction.id.toString()}</Text>
               <Text>Amount: {selectedAuction.amount?.amount}</Text>
               <Text>Denom: {selectedAuction.amount?.denom}</Text>
               <Text>Highest Bid: {selectedAuction.highestBid?.bidAmount.toString()}</Text>
@@ -222,14 +263,15 @@ export default function Home() {
         
             </>
           )}
-          <Button   colorScheme="blue" mt={4}>Bid</Button>
+          <Button onClick={handleBidClick(Number(selectedAuction?.id), bidAmount, bidFeeAmount)}   colorScheme="blue" mt={4}>Bid</Button>
         </ModalBody>
       </ModalContent>
     </Modal>
   );
   
-  const { accountData, loading, error } = useQueryAccount(address);
-console.log(accountData)
+
+  
+
 
   // const handleBidClick = async () => {
   //   if (!selectedAuction) return;
@@ -322,6 +364,7 @@ console.log(accountData)
         />
         <Box
         mr={"190px"}
+        mt={"-20px"}
         >
  <WalletSection/>
  </Box>
