@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { generateEndpointAccount } from '@gravity-bridge/provider'
 
 export function useQueryAccount(address: string | undefined) {
     const [accountData, setAccountData] = useState<any>(null);
@@ -13,20 +14,25 @@ export function useQueryAccount(address: string | undefined) {
         }
 
         const nodeUrl = 'https://nodes.chandrastation.com/gravity/rpc/';
-        const queryEndpoint = `${nodeUrl}cosmos/auth/v1beta1/accounts/${address}`;
+        const queryEndpoint = `${nodeUrl}${generateEndpointAccount(address)}`;
 
         const fetchData = async () => {
             try {
-                const response = await fetch(queryEndpoint, {
+                const restOptions = {
                     method: 'GET',
                     headers: { 'Content-Type': 'application/json' },
-                });
+                  }
+                  
+                  // Note that the node will return a 400 status code if the account does not exist.
+                  const rawResult = await fetch(
+                    queryEndpoint,
+                    restOptions,
+                  )
 
-                if (!response.ok) {
+                  const result = await rawResult.json()
+                if (!result.ok) {
                     throw new Error('Failed to fetch account data');
                 }
-
-                const result = await response.json();
                 console.log(result)
                 setAccountData(result.account);
             } catch (error: any) {

@@ -1,13 +1,11 @@
 import { useEffect, useState } from 'react';
 import Head from 'next/head';
 import { useChain } from '@cosmos-kit/react';
-
 import BigNumber from 'bignumber.js';
 import { auction} from '../node_modules/@chalabi/gravity-bridgejs/dist/codegen/index';
 import { Auction } from '@chalabi/gravity-bridgejs/dist/codegen/auction/v1/auction';
 import { getDenominationInfo, formatTokenAmount } from '../config/denoms';
 import { FaSyncAlt } from 'react-icons/fa';
-
 import { createTxRaw } from '@gravity-bridge/proto';
 import {
   generateEndpointBroadcast,
@@ -47,7 +45,8 @@ import {
   Tooltip,
   SkeletonText,
   Skeleton,
-  Spacer
+  Spacer,
+  Box
 } from '@chakra-ui/react';
 import { BsFillMoonStarsFill, BsFillSunFill } from 'react-icons/bs';
 import {
@@ -230,7 +229,7 @@ export default function Home() {
   );
   
   const { accountData, loading, error } = useQueryAccount(address);
-
+console.log(accountData)
 
   // const handleBidClick = async () => {
   //   if (!selectedAuction) return;
@@ -312,7 +311,8 @@ export default function Home() {
 
       <Flex justifyContent="space-between" alignItems="center" mb={4}>
         <Image 
-          height={"40px"}
+          mt={"10px"}
+          height={"60px"}
           src={handleChangeColorModeValue(
             colorMode,
             "logolight.svg",
@@ -320,39 +320,20 @@ export default function Home() {
           )}
           alt="Gravity Bridge Logo"
         />
-     
-     <Heading
-
-         as="h1"
-         fontSize={{ base: '2xl', md: '2xl' }}
-         fontWeight="light"
-         letterSpacing={2}
-       >
-        FEE AUCTION
-       </Heading>
-
-
+        <Box
+        mr={"190px"}
+        >
  <WalletSection/>
-
+ </Box>
          
-          <Button  variant="outline" p={0} onClick={toggleColorMode}>
-
-            <Icon
-              as={handleChangeColorModeValue(
-                colorMode,
-                BsFillMoonStarsFill,
-                BsFillSunFill
-              )}
-            />
-          </Button>
-
+         
       </Flex>
 
 
    
       <Container maxW="5xl" py={4}>
       <Flex justifyContent="space-between" alignItems="center">
-        <Heading as="h2" size="lg" fontWeight={"light"} letterSpacing="4">Auction Table</Heading>
+        <Heading as="h2" size="lg" fontWeight={"light"} letterSpacing="4">Fee Auction</Heading>
         <Text>Time Remaining: {auctionTimer.remainingTime}</Text>
       <Text>Blocks Remaining: {auctionTimer.remainingBlocks}</Text>
         <Flex alignItems="center">
@@ -377,6 +358,23 @@ export default function Home() {
           auctionData.length > 0 && renderAuctionTable()
         )}
       </Center>
+      <Flex
+mt={"-100px"}
+justifySelf={"flex-end"}
+>
+      <Button  variant="outline" p={0} onClick={toggleColorMode}>
+
+<Icon
+
+  as={handleChangeColorModeValue(
+    colorMode,
+    BsFillMoonStarsFill,
+    BsFillSunFill
+  )}
+/>
+
+</Button>
+</Flex>
 
       </Container>
  

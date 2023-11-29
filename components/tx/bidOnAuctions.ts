@@ -1,7 +1,20 @@
-import { MsgBidParams, createTxMsgBid} from '@gravity-bridge/gravityjs/packages/transactions/dist/messages/auction/bid'
-import { TxContext } from '@gravity-bridge/transactions'
-import { Chain, Fee, Sender } from '@gravity-bridge/transactions/dist/messages/common';
-import { useQueryAccount } from './queryAccount';
+import { MsgBidParams, createTxMsgBid, TxContext} from '@gravity-bridge/transactions'
+
+export interface Fee {
+    amount: string;
+    denom: string;
+    gas: string;
+}
+export interface Sender {
+    accountAddress: string;
+    sequence: number;
+    accountNumber: number;
+    pubkey: string;
+}
+export interface Chain {
+    chainId: number;
+    cosmosChainId: string;
+}
   
 export const createBidTransaction = (address: any, auctionId: { toString: () => any; }, bidAmount: { toString: () => any; }, bidFee: { toString: () => any; }, accountData: { base_account: { address: any; sequence: any; account_number: any; pub_key: { key: any; }; }; }) => {
     if (!address || !accountData) {
