@@ -8,6 +8,6 @@ The auction process is straightforward: the list of auctions refreshes automatic
 - [ ] Add EIP-712 support to the app, so that users can sign their bids with their Ethereum private keys.
 - [ ] Add an analytics section for bid info and auction history.
 - [X] Add mobile support message.
-- [ ] Add disable handling for tx and connect wallet buttons.
+- [X] Add disable handling for tx and connect wallet buttons.
 - [ ] Handle State Better
 - [ ] Merge with analytics and bridge app
