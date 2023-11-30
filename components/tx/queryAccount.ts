@@ -21,15 +21,13 @@ export function useQueryAccount(address: string | undefined) {
                 const restOptions = {
                     method: 'GET',
                     headers: { 'Content-Type': 'application/json' },
-                  }
-                  
-                  // Note that the node will return a 400 status code if the account does not exist.
-                  const rawResult = await fetch(
+                }
+                // Note that the node will return a 400 status code if the account does not exist.
+                const rawResult = await fetch(
                     queryEndpoint,
                     restOptions,
-                  )
-
-                  const result = await rawResult.json()
+                )
+                const result = await rawResult.json()
                 if (!result.ok) {
                     throw new Error('Failed to fetch account data');
                 }
@@ -41,11 +39,9 @@ export function useQueryAccount(address: string | undefined) {
                 setLoading(false);
             }
         };
-
         fetchData();
     }, [address]);
-
-
+    
     return { accountData, loading, error };
 };
 

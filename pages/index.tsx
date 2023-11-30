@@ -1,4 +1,3 @@
-/* eslint-disable */
 import { useEffect, useState } from 'react';
 import Head from 'next/head';
 import { useChain } from '@cosmos-kit/react';
@@ -49,7 +48,8 @@ import {
   AlertIcon,
   AlertTitle,
   Spinner,
-  Link
+  Link,
+  useMediaQuery
 } from '@chakra-ui/react';
 import { BsFillMoonStarsFill, BsFillSunFill } from 'react-icons/bs';
 import { AiOutlineCheckCircle, AiOutlineCloseCircle } from 'react-icons/ai';
@@ -70,6 +70,7 @@ const createRPCQueryClient = gravitybridge.auction.ClientFactory.createRPCQueryC
 export default function Home() {
   const { colorMode, toggleColorMode } = useColorMode();
 
+  const [isLessThan1000px] = useMediaQuery("(max-width: 1000px)");
   const { getSigningStargateClient, address, status, getRpcEndpoint } =
     useChain(chainName);
 
@@ -78,28 +79,36 @@ export default function Home() {
   const [timer, setTimer] = useState(30);
 
    // State to store the remaining blocks and time
-   const [auctionTimer, setAuctionTimer] = useState({ remainingBlocks: 0, remainingTime: '' });
+  const [auctionTimer, setAuctionTimer] = useState({ remainingBlocks: 0, remainingTime: '' });
 
    // Function to fetch the current block height
-   const fetchCurrentBlockHeight = async () => {
-     const clientAuction = await createRPCQueryClient({ rpcEndpoint: 'https://nodes.chandrastation.com/rpc/gravity/' }); 
-     const currentHeightResponse = await clientAuction.cosmos.base.tendermint.v1beta1.getLatestBlock();
-     return currentHeightResponse?.block?.header?.height || 0;
-   };
- 
+  const fetchCurrentBlockHeight = async () => {
+  const clientAuction = await createRPCQueryClient({ rpcEndpoint: 'https://nodes.chandrastation.com/rpc/gravity/' }); 
+  const currentHeightResponse = await clientAuction.cosmos.base.tendermint.v1beta1.getLatestBlock();
+  return currentHeightResponse?.block?.header?.height || 0;
+};
+
    // Function to calculate and update the auction timer
-   const fetchAuctionTimer = async () => {
-     const clientAuction = await createRPCQueryClient({ rpcEndpoint: 'https://nodes.chandrastation.com/rpc/gravity/' }); 
-     const times = await clientAuction.auction.v1.auctionPeriod();
-     const endBlockHeight = times.auctionPeriod?.endBlockHeight.toString() || 0;
-     const currentBlockHeight = await fetchCurrentBlockHeight();
- 
-     const remainingBlocks = Number(endBlockHeight) - Number(currentBlockHeight);
-     const seconds = remainingBlocks * 6; // Assuming each block takes an average of 6 seconds
-     const formattedTime = new Date(seconds * 1000).toISOString().substr(11, 8);
- 
-     setAuctionTimer({ remainingBlocks, remainingTime: formattedTime });
-   };
+  const fetchAuctionTimer = async () => {
+    const clientAuction = await createRPCQueryClient({ rpcEndpoint: 'https://nodes.chandrastation.com/rpc/gravity/' });
+    const times = await clientAuction.auction.v1.auctionPeriod();
+    const endBlockHeight = times.auctionPeriod?.endBlockHeight.toString() || 0;
+    const currentBlockHeight = await fetchCurrentBlockHeight();
+  
+    const remainingBlocks = Number(endBlockHeight) - Number(currentBlockHeight);
+    const totalSeconds = remainingBlocks * 6; // Assuming each block takes an average of 6 seconds
+  
+    // Calculate hours, minutes, and seconds
+    const hours = Math.floor(totalSeconds / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    const seconds = totalSeconds % 60;
+  
+    // Format the time
+    const formattedTime = `~${hours}h ${minutes}m`;
+  
+    setAuctionTimer({ remainingBlocks, remainingTime: formattedTime });
+  };
+  
  
    useEffect(() => {
      fetchAuctionTimer(); // Call this function on component mount or when needed
@@ -121,6 +130,7 @@ export default function Home() {
     }
     setIsLoading(false);
     setTimer(30); // Reset timer
+    fetchAuctionTimer()
   };
 
   useEffect(() => {
@@ -198,7 +208,7 @@ export default function Home() {
     }
   };
 
-  const [bidAmountInput, setBidAmountInput] = useState('');
+  const [bidAmountInput, setBidAmountInput] = useState('0');
 
   const handleInputChange = (event: { target: { value: string; }; }) => {
     // Extract the value from the event
@@ -269,10 +279,8 @@ export default function Home() {
     </TableContainer>
   );
 
-
   const bidFeeAmount = '34000';
   
-
   const renderAuctionModal = () => (
     <Modal isOpen={isOpen} onClose={onClose}>
       <ModalOverlay />
@@ -340,19 +348,27 @@ export default function Home() {
               placeholder="Enter amount"
               mb={6}
             />
+              <Tooltip 
+      label={disabledTooltipMessage} 
+   
+    >
+
             <Button 
-              disabled={Number(bidAmountInput) === 0}
+              isDisabled={!address || bidAmountInput === '0'}
               onClick={handleBidClick(String(selectedAuction?.id), bidAmountInput, bidFeeAmount)}
               colorScheme="blue"
               mb={6}
             >
               Bid
             </Button>
+
+            </Tooltip>
           </Flex>
         </ModalBody>
       </ModalContent>
     </Modal>
   );
+
 
   // const handleBidClick = async () => {
   //   if (!selectedAuction) return;
@@ -422,7 +438,9 @@ export default function Home() {
   //   }
   // };
   
-
+  const disabledTooltipMessage = !address ? "Connect your wallet to place a bid" : 
+  bidAmountInput === '0' ? "Bid amount must be greater than 0" : 
+  "";
   
   return (
     <Container maxW="8xl" py={0}>
@@ -447,6 +465,8 @@ export default function Home() {
          mr={"100px"}
          mt={"-10px"}
         >
+          { !isLessThan1000px && (
+            <>
           <Box paddingX={"90px"}>
   <WalletSection/>
   </Box>
@@ -461,13 +481,20 @@ export default function Home() {
     )} />
 
   </Button>
+  </>
+          )}
 </Flex>
       </Flex>   
       <Container maxW="5xl" py={4}>
+      { !isLessThan1000px && (
       <Flex justifyContent="space-between" alignItems="center">
         <Heading as="h2" size="lg" fontWeight={"light"} letterSpacing="4">Fee Auction</Heading>
-        <Text>Time Remaining: {auctionTimer.remainingTime}</Text>
-      <Text>Blocks Remaining: {auctionTimer.remainingBlocks}</Text>
+        <Text
+        fontWeight={"light"}
+        >Time Remaining: {auctionTimer.remainingTime}</Text>
+      <Text
+      fontWeight={"light"}
+      >Blocks Remaining: {auctionTimer.remainingBlocks}</Text>
         <Flex alignItems="center">
         <Tooltip label="Auction refetch timer" aria-label='A tooltip'>
           <CircularProgress value={(timer / 30) * 100} color="blue.400">
@@ -479,15 +506,21 @@ export default function Home() {
           </Button>
         </Flex>
       </Flex>
-
+      )}
       <Center mt={8} mb={16}>
-      {renderAuctionModal()}
+        {renderAuctionModal()}
         {isLoading ? (
           <Skeleton mt="4" noOfLines={12}>
-          <SkeletonText spacing={12} /> 
+            <SkeletonText spacing={12} />
           </Skeleton>
         ) : (
-          auctionData.length > 0 && renderAuctionTable()
+          isLessThan1000px ? (
+            <Text color="gray.600" fontSize="lg" textAlign="center">
+              This breakpoint is not supported, please either rotate to landscape or switch to a desktop.
+            </Text>
+          ) : (
+            auctionData.length > 0 && renderAuctionTable()
+          )
         )}
       </Center>
       <Center mt={"-30px"}>
