@@ -1,3 +1,4 @@
+/* eslint-disable */
 import '../styles/globals.css';
 import type { AppProps } from 'next/app';
 import { ChainProvider } from '@cosmos-kit/react';
@@ -12,16 +13,16 @@ import { assets, chains } from 'chain-registry';
 import { SignerOptions } from '@cosmos-kit/core';
 import '@interchain-ui/react/styles';
 import { Chain } from '@chain-registry/types';
-import { gravityProtoRegistry, gravityAminoConverters, auctionAminoConverters, auctionProtoRegistry } from '@chalabi/gravity-bridgejs/dist/codegen';
-import { SigningStargateClientOptions, AminoTypes } from '@cosmjs/stargate';
+import { auctionAminoConverters, auctionProtoRegistry } from '@chalabi/gravity-bridgejs/dist/codegen';
+import { AminoTypes } from '@cosmjs/stargate';
 import { Registry } from '@cosmjs/proto-signing';
-import { getSigningCosmosClientOptions } from 'interchain';
-
 
 
 function CreateCosmosApp({ Component, pageProps }: AppProps) {
+  
   const signerOptions: SignerOptions = {
-    signingStargate: (_chain: Chain): SigningStargateClientOptions | undefined => {
+    
+    signingStargate: (_chain: Chain) => {
       const registry = new Registry(auctionProtoRegistry);
       const aminoTypes = new AminoTypes(auctionAminoConverters);
       return {
@@ -30,8 +31,6 @@ function CreateCosmosApp({ Component, pageProps }: AppProps) {
       };
     },
   };
-
-
 
 
   return (

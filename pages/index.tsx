@@ -1,27 +1,18 @@
+/* eslint-disable */
 import { useEffect, useState } from 'react';
 import Head from 'next/head';
 import { useChain } from '@cosmos-kit/react';
 import BigNumber from 'bignumber.js';
-import { auction, auctionAminoConverters, auctionProtoRegistry} from '../node_modules/@chalabi/gravity-bridgejs/dist/codegen/index';
-import { Auction } from '@chalabi/gravity-bridgejs/dist/codegen/auction/v1/auction';
+import { auction, auctionAminoConverters, auctionProtoRegistry } from '@chalabi/gravity-bridgejs/dist/codegen';
+import { Auction } from '@chalabi/gravity-bridgejs/dist/codegen/auction/v1/auction'; 
 import { getDenominationInfo, formatTokenAmount } from '../config/denoms';
 import { FaSyncAlt } from 'react-icons/fa';
-import { createTxRaw } from '@gravity-bridge/proto';
-import {
-  generateEndpointBroadcast,
-  generatePostBodyBroadcast,
-} from '@gravity-bridge/provider';
-import { getSigningCosmosClient } from '../node_modules/@chalabi/gravity-bridgejs/dist/codegen/index';
 import { bidOnAuction } from '../components/tx/dead.bidOnAuction';
-import { getSigningAuctionClient } from '../node_modules/@chalabi/gravity-bridgejs/dist/codegen/index';
 import { Registry } from '@cosmjs/proto-signing';
 import {
-
   Heading,
   Text,
-
   Container,
-
   Button,
   Flex,
   Icon,
@@ -35,7 +26,6 @@ import {
   Thead,
   Tr,
   Image,
-
   CircularProgress,
   CircularProgressLabel,
   useDisclosure,
@@ -48,34 +38,33 @@ import {
   Tooltip,
   SkeletonText,
   Skeleton,
-  Spacer,
-  Box
+  Box,
+  Input,
+  StatNumber,
+  Stat,
+  StatLabel,
+  useToast,
+  Alert,
+  AlertDescription,
+  AlertIcon,
+  AlertTitle,
+  Spinner
 } from '@chakra-ui/react';
 import { BsFillMoonStarsFill, BsFillSunFill } from 'react-icons/bs';
+import { AiOutlineCheckCircle, AiOutlineCloseCircle } from 'react-icons/ai';
 import {
-
-  chainName,
-
+  chainName
 } from '../config';
-
-
 import {
   WalletSection,
   handleChangeColorModeValue,
 } from '../components';
-
-
-import Long from 'long';
-import { Chain, createBidTransaction } from '../components/tx/bidOnAuctions';
-import { useQueryAccount } from '../components/tx/queryAccount';
-import { SigningStargateClientOptions, AminoTypes } from '@cosmjs/stargate';
+import { Chain } from '@chain-registry/types';
 import { SignerOptions } from '@cosmos-kit/core';
-
+import { AminoTypes } from '@cosmjs/stargate';
 
 const gravitybridge = { auction };
 const createRPCQueryClient = gravitybridge.auction.ClientFactory.createRPCQueryClient;
-
-
 
 export default function Home() {
   const { colorMode, toggleColorMode } = useColorMode();
@@ -160,10 +149,15 @@ export default function Home() {
 
   const [response, setResponse] = useState('');
 
+
   const signerOptions: SignerOptions = {
-    signingStargate: (_chain: Chain): SigningStargateClientOptions | undefined => {
+
+    signingStargate: (chain: Chain) => { 
       const registry = new Registry(auctionProtoRegistry);
-      const aminoTypes = new AminoTypes(auctionAminoConverters);
+      const aminoTypes = new AminoTypes({
+        ...auctionAminoConverters,
+        "gravity/MsgBid"
+      : auctionAminoConverters["/auction.v1.MsgBid"],});
       return {
         aminoTypes: aminoTypes,
         registry: registry,
@@ -171,10 +165,17 @@ export default function Home() {
     },
   };
 
-  const handleBidClick = (auctionId: number, bidAmount: number, bidFeeAmount: number) => async (event: { preventDefault: () => void; stopPropagation: () => void; }) => {
+  const [isSigning, setIsSigning] = useState(false);
+  const [isSigned, setIsSigned] = useState(false);
+  const [isError, setIsError] = useState(false);
+
+  const toast = useToast();
+
+  const handleBidClick = (auctionId: string, bidAmount: string, bidFeeAmount: string) => async (event: { preventDefault: () => void; stopPropagation: () => void; }) => {
     event.preventDefault();
     event.stopPropagation();
-  
+    setIsSigning(true);
+    setIsError(false);
     try {
       await bidOnAuction(
         getSigningStargateClient,
@@ -184,10 +185,34 @@ export default function Home() {
         address ?? "",
         auctionId,
         bidAmount,
-        bidFeeAmount
+        bidFeeAmount,
+        toast
       )();
+      setIsSigning(false);
+      setIsSigned(false);
     } catch (error) {
+      setIsSigning(false);
+      setIsError(true);
       console.error(error);
+    }
+  };
+
+  const [bidAmountInput, setBidAmountInput] = useState('');
+
+  const handleInputChange = (event: { target: { value: string; }; }) => {
+    // Extract the value from the event
+    const inputValue = event.target.value;
+  
+    // Convert the input value to a number (handle both integer and decimal inputs)
+    let inputNumber = Number(inputValue);
+  
+    // Check if the number is valid and non-negative
+    if (!isNaN(inputNumber) && inputNumber >= 0) {
+      // Multiply the number by 10^6 and convert to string
+      let convertedNumber = (inputNumber * 1e6).toString();
+  
+      // Update the state with the converted number
+      setBidAmountInput(convertedNumber);
     }
   };
   
@@ -203,7 +228,7 @@ export default function Home() {
       return amountInGraviton.toFormat();
     } else {
       // For amounts equal or above 1,000,000 ugraviton, show whole number or decimal if present
-      return amountInGraviton.toFormat(amountInGraviton.decimalPlaces() > 0 ? amountInGraviton.decimalPlaces() : 0);
+      return amountInGraviton.toFormat(amountInGraviton.decimalPlaces() || 0 > 0 ? amountInGraviton.decimalPlaces() || 0 : 0);
     }
   };
 
@@ -243,8 +268,9 @@ export default function Home() {
     </TableContainer>
   );
 
-  const bidAmount = 1000000;
-  const bidFeeAmount = 400000;
+
+  const bidFeeAmount = '34000';
+  
 
   const renderAuctionModal = () => (
     <Modal isOpen={isOpen} onClose={onClose}>
@@ -253,25 +279,79 @@ export default function Home() {
         <ModalHeader>Auction Details</ModalHeader>
         <ModalCloseButton />
         <ModalBody>
-          {selectedAuction && (
-            <>
-              <Text>ID: {selectedAuction.id.toString()}</Text>
-              <Text>Amount: {selectedAuction.amount?.amount}</Text>
-              <Text>Denom: {selectedAuction.amount?.denom}</Text>
-              <Text>Highest Bid: {selectedAuction.highestBid?.bidAmount.toString()}</Text>
-              <Text>Bidder: {selectedAuction.highestBid?.bidderAddress}</Text>
-        
-            </>
+        {isSigning && (
+          <Center>
+            <Spinner size="xl" />
+          </Center>
+        )}
+        {isSigned && (
+          <Alert status="success">
+            <AlertIcon as={AiOutlineCheckCircle} />
+            <AlertTitle mr={2}>Success!</AlertTitle>
+            <AlertDescription>Your transaction has been signed.</AlertDescription>
+          </Alert>
+        )}
+        {isError && (
+          <Alert status="error">
+            <AlertIcon as={AiOutlineCloseCircle} />
+            <AlertTitle mr={2}>Error!</AlertTitle>
+            <AlertDescription>An error occurred during the transaction.</AlertDescription>
+          </Alert>
+        )}
+        {!isSigning && !isSigned && !isError && selectedAuction && (
+            <Flex flexDir={"column"} gap={6}>
+              <Stat>
+                <StatLabel>ID</StatLabel>
+                <StatNumber>{selectedAuction.id.toString()}</StatNumber>
+              </Stat>
+              <Stat>
+                <StatLabel>Amount</StatLabel>
+                <StatNumber
+
+                >{formatTokenAmount(selectedAuction.amount?.amount, selectedAuction.amount?.denom)} {getDenominationInfo(selectedAuction.amount?.denom).symbol}</StatNumber>
+              
+              </Stat>
+              <Stat>
+                <StatLabel>Highest Bid</StatLabel>
+                { selectedAuction.highestBid ? (
+                <StatNumber> {formatBidAmount(selectedAuction.highestBid?.bidAmount.toString())} GRAVITON</StatNumber>
+                ) : (
+                  <StatNumber>No Bid</StatNumber>
+                )}
+              </Stat>
+              <Stat
+              mb={4}
+              >
+                <StatLabel>Bidder</StatLabel>
+                 { selectedAuction.highestBid?.bidderAddress ? (
+                <Text>{selectedAuction.highestBid?.bidderAddress}</Text>
+                ) : (
+                  <StatNumber>No Bid</StatNumber>
+                )}
+              </Stat>
+            </Flex>
           )}
-          <Button onClick={handleBidClick(Number(selectedAuction?.id), bidAmount, bidFeeAmount)}   colorScheme="blue" mt={4}>Bid</Button>
+          <Flex mt={4} justifyContent="space-between" alignItems="center" gap={6}>
+            <Input 
+              type="text"
+
+              onChange={handleInputChange}
+              placeholder="Enter amount"
+              mb={6}
+            />
+            <Button 
+              disabled={Number(bidAmountInput) === 0}
+              onClick={handleBidClick(String(selectedAuction?.id), bidAmountInput, bidFeeAmount)}
+              colorScheme="blue"
+              mb={6}
+            >
+              Bid
+            </Button>
+          </Flex>
         </ModalBody>
       </ModalContent>
     </Modal>
   );
-  
-
-  
-
 
   // const handleBidClick = async () => {
   //   if (!selectedAuction) return;
@@ -362,18 +442,26 @@ export default function Home() {
           )}
           alt="Gravity Bridge Logo"
         />
-        <Box
-        mr={"190px"}
-        mt={"-20px"}
+        <Flex alignItems="center" justifyContent="space-between"
+         mr={"100px"}
+         mt={"-10px"}
         >
- <WalletSection/>
- </Box>
-         
-         
-      </Flex>
+          <Box paddingX={"90px"}>
+  <WalletSection/>
+  </Box>
 
+  <Button variant="outline" p={0} onClick={toggleColorMode}>
+        {/* eslint-disable-next-line  */}
+    <Icon as={handleChangeColorModeValue(
+      colorMode,
+      // eslint-disable-next-line 
+      BsFillMoonStarsFill,
+      BsFillSunFill
+    )} />
 
-   
+  </Button>
+</Flex>
+      </Flex>   
       <Container maxW="5xl" py={4}>
       <Flex justifyContent="space-between" alignItems="center">
         <Heading as="h2" size="lg" fontWeight={"light"} letterSpacing="4">Fee Auction</Heading>
@@ -401,23 +489,7 @@ export default function Home() {
           auctionData.length > 0 && renderAuctionTable()
         )}
       </Center>
-      <Flex
-mt={"-100px"}
-justifySelf={"flex-end"}
->
-      <Button  variant="outline" p={0} onClick={toggleColorMode}>
-
-<Icon
-
-  as={handleChangeColorModeValue(
-    colorMode,
-    BsFillMoonStarsFill,
-    BsFillSunFill
-  )}
-/>
-
-</Button>
-</Flex>
+      
 
       </Container>
  

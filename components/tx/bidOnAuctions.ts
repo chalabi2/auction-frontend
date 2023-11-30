@@ -11,7 +11,7 @@ export interface Sender {
     accountNumber: number;
     pubkey: string;
 }
-export interface Chain {
+export interface Chains {
     chainId: number;
     cosmosChainId: string;
 }
@@ -27,7 +27,7 @@ export const createBidTransaction = (address: any, auctionId: { toString: () => 
       return null;
     }
   
-    const chain: Chain = {
+    const chain: Chains = {
       chainId: 417834,
       cosmosChainId: 'gravity-bridge-3',
     };
