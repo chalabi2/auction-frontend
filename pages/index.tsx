@@ -48,7 +48,8 @@ import {
   AlertDescription,
   AlertIcon,
   AlertTitle,
-  Spinner
+  Spinner,
+  Link
 } from '@chakra-ui/react';
 import { BsFillMoonStarsFill, BsFillSunFill } from 'react-icons/bs';
 import { AiOutlineCheckCircle, AiOutlineCloseCircle } from 'react-icons/ai';
@@ -426,7 +427,7 @@ export default function Home() {
   return (
     <Container maxW="8xl" py={0}>
       <Head>
-        <title>Gravity Bridge Fee Auction App</title>
+        <title>Gravity Bridge Fee Auction</title>
         <meta name="description" content="Gravity Bridge Fee Auction App" />
         <link rel="icon" href="/favicon.ico" />
       </Head>
@@ -489,8 +490,12 @@ export default function Home() {
           auctionData.length > 0 && renderAuctionTable()
         )}
       </Center>
-      
-
+      <Center mt={"-30px"}>
+      <Text fontSize="sm" color="gray.500">Built by <Link href='https://chandrastation.com'>Chandra Station</Link></Text>
+      </Center>
+      <Center>
+      <Text fontSize="xs" fontWeight={"light"} color="gray.500">Alpha v0.0.1</Text>
+      </Center>
       </Container>
  
     </Container>
