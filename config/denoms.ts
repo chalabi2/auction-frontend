@@ -136,6 +136,15 @@ export const chainDenoms: ChainDenominations = {
         logoURI: 'https://assets.coingecko.com/coins/images/13720/thumb/wrapped-dogecoin.png?1611469007',
         priceDenom: 'wdoge'
     },
+    gravity0x92D6C1e31e14520e676a687F0a93788B716BEff5: {
+        name: 'DYDX',
+        denom: 'gravity0x92D6C1e31e14520e676a687F0a93788B716BEff5',
+        symbol: 'DYDX',
+        coinId: 'dydx',
+        decimals: 18,
+        logoURI: '',
+        priceDenom: 'dydx'
+    },
     gravity0x93581991f68DBaE1eA105233b67f7FA0D6BDeE7b: {
         name: 'WEVMOS',
         denom: 'gravity0x93581991f68DBaE1eA105233b67f7FA0D6BDeE7b',
@@ -153,6 +162,15 @@ export const chainDenoms: ChainDenominations = {
       decimals: 8,
       logoURI: 'https://assets.coingecko.com/coins/images/7598/thumb/wrapped_bitcoin_wbtc.png?1548822744',
       priceDenom: 'wrapped-bitcoin'
+    },
+    gravity0xe28b3B32B6c345A34Ff64674606124Dd5Aceca30: {
+        name: 'Injective',
+        denom: 'gravity0xe28b3B32B6c345A34Ff64674606124Dd5Aceca30',
+        symbol: 'INJ',
+        coinId: 'injective',
+        decimals: 18,
+        logoURI: 'https://assets.coingecko.com/coins/images/825/thumb/BNB.png?1547034615',
+        priceDenom: 'inj'
     },
     gravity0x7f39C581F595B53c5cb19bD0b3f8dA6c935E2Ca0: {
       name: 'Wrapped liquid staked Ether 2.0',
@@ -234,6 +252,15 @@ export const chainDenoms: ChainDenominations = {
       decimals: 18,
       logoURI: '',
       priceDenom: 'acanto'
+    },
+    'ibc/E05A4DAEA5681A09067DC213F32464639D18007215C87964EC45FF876B5EE82B': {
+        name: 'Archway',
+        denom: 'ibc/E05A4DAEA5681A09067DC213F32464639D18007215C87964EC45FF876B5EE82B',
+        symbol: 'ARCH',
+        coinId: 'arch',
+        decimals: 18,
+        logoURI: '',
+        priceDenom: 'aarch'
     },
     'ibc/D157AD8A50DAB0FC4EB95BBE1D9407A590FA2CDEE04C90A76C005089BF76E519': {
       name: 'Unification',
