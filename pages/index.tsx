@@ -80,6 +80,7 @@ export default function Home() {
 
    // State to store the remaining blocks and time
   const [auctionTimer, setAuctionTimer] = useState({ remainingBlocks: 0, remainingTime: '' });
+  const [auctionFeePrice, setAuctionFeePrice] = useState<bigint>(BigInt(0));
 
    // Function to fetch the current block height
   const fetchCurrentBlockHeight = async () => {
@@ -92,6 +93,9 @@ export default function Home() {
   const fetchAuctionTimer = async () => {
     const clientAuction = await createRPCQueryClient({ rpcEndpoint: 'https://nodes.chandrastation.com/rpc/gravity/' });
     const times = await clientAuction.auction.v1.auctionPeriod();
+    const params = await clientAuction.auction.v1.params();
+    const auctionFeePrice = params.params.minBidFee;
+    setAuctionFeePrice(auctionFeePrice);
     const endBlockHeight = times.auctionPeriod?.endBlockHeight.toString() || 0;
     const currentBlockHeight = await fetchCurrentBlockHeight();
   
@@ -279,7 +283,7 @@ export default function Home() {
     </TableContainer>
   );
 
-  const bidFeeAmount = '34000';
+  const bidFeeAmount = auctionFeePrice.toString();
   
   const renderAuctionModal = () => (
     <Modal isOpen={isOpen} onClose={onClose}>
