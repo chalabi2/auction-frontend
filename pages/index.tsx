@@ -247,6 +247,23 @@ export default function Home() {
     }
   };
 
+  const formatTotalBidCost = () => {
+    // Convert bidAmountInput to a number
+    const bidAmountNumber = Number(bidAmountInput);
+  
+    // Convert bidFeeAmount to a number
+    const bidFeeAmountNumber = Number(bidFeeAmount);
+  
+    // Calculate the total bid cost in smaller units (ugraviton)
+    const totalBidCostUgraviton = bidAmountNumber + bidFeeAmountNumber;
+  
+    // Convert the total bid cost back to graviton (1 graviton = 1,000,000 ugraviton)
+    const totalBidCostGraviton = totalBidCostUgraviton / 1e6;
+  
+    // Format and return the total bid cost
+    return totalBidCostGraviton.toFixed(6).toString() + ' GRAVITON';
+  };
+
   const renderAuctionTable = () => (
     <TableContainer>
       <Table variant="simple">
@@ -337,13 +354,26 @@ export default function Home() {
               >
                 <StatLabel>Bidder</StatLabel>
                  { selectedAuction.highestBid?.bidderAddress ? (
-                <Text>{selectedAuction.highestBid?.bidderAddress}</Text>
+                <Text
+                fontWeight={'bold'}
+                fontSize={'md'}
+                >{selectedAuction.highestBid?.bidderAddress}</Text>
                 ) : (
                   <StatNumber>No Bid</StatNumber>
                 )}
               </Stat>
             </Flex>
           )}
+           <Stat
+              mb={4}
+              >
+                <StatLabel>Bid Fee</StatLabel>
+                 { bidFeeAmount ? (
+                <StatNumber>{Number(formatBidAmount(bidFeeAmount)).toFixed(6).toString()} GRAVITON</StatNumber>
+                ) : (
+                  <StatNumber>No Bid</StatNumber>
+                )}
+              </Stat>
           <Flex mt={4} justifyContent="space-between" alignItems="center" gap={6}>
             <Input 
               type="text"
@@ -368,6 +398,12 @@ export default function Home() {
 
             </Tooltip>
           </Flex>
+          <Flex justifyContent="space-between" flexDir={'column'} alignItems="center" mb={4}>
+  <Text fontWeight={'light'} fontSize={'xs'}>Total Bid Cost</Text>
+  <Text fontSize={'xs'} fontWeight={'light'}>
+    {formatTotalBidCost()}
+  </Text>
+</Flex>
         </ModalBody>
       </ModalContent>
     </Modal>
