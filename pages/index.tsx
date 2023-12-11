@@ -408,10 +408,7 @@ export default function Home() {
                   <StatLabel>Bid Fee</StatLabel>
                   {bidFeeAmount ? (
                     <StatNumber>
-                      {Number(formatBidAmount(bidFeeAmount))
-                        .toFixed(6)
-                        .toString()}{" "}
-                      GRAVITON
+                      {formatBidAmount(bidFeeAmount).toString()} GRAVITON
                     </StatNumber>
                   ) : (
                     <StatNumber>No Bid</StatNumber>
