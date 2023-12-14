@@ -60,6 +60,7 @@ import {
   DrawerHeader,
   DrawerOverlay,
   MenuIcon,
+  VStack,
 } from "@chakra-ui/react";
 import { BsFillMoonStarsFill, BsFillSunFill } from "react-icons/bs";
 import { MdMenu } from "react-icons/md";
@@ -475,7 +476,7 @@ export default function Home() {
       <Flex justifyContent="space-between" alignItems="center" mb={4}>
         <Image
           mt={{ base: "30px", md: "10px" }}
-          height={{ base: "40px", sm: "40px", md: "60px" }}
+          height={{ base: "30px", md: "60px" }}
           src={handleChangeColorModeValue(
             colorMode,
             "logolight.svg",
@@ -511,7 +512,7 @@ export default function Home() {
           {isLessThan1000px && (
             <DrawerControlProvider closeDrawer={DrawerOnClose}>
               <>
-                <Button top={"20px"} left={"40px"} onClick={DrawerOnOpen}>
+                <Button top={"20px"} left={"60px"} onClick={DrawerOnOpen}>
                   <Icon name="menu" as={MdMenu} />
                 </Button>
 
@@ -592,12 +593,14 @@ export default function Home() {
         )}
         {isLessThan1000px && (
           <Flex mt={"30px"} justifyContent="space-between" alignItems="center">
-            <Heading as="h2" size="lg" fontWeight={"light"} letterSpacing="4">
-              Fee Auction
-            </Heading>
-            <Text fontWeight={"light"}>
-              Period: {auctionTimer.remainingTime}
-            </Text>
+            <VStack alignItems={"left"}>
+              <Heading as="h2" size="lg" fontWeight={"light"} letterSpacing="4">
+                Fee Auction
+              </Heading>
+              <Text fontWeight={"light"}>
+                Time Remaining: {auctionTimer.remainingTime}
+              </Text>
+            </VStack>
             <Flex alignItems="center">
               <Tooltip label="Auction refetch timer" aria-label="A tooltip">
                 <CircularProgress value={(timer / 30) * 100} color="blue.400">
