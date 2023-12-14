@@ -1,4 +1,4 @@
-import { useChain } from '@cosmos-kit/react';
+import { useChain } from "@cosmos-kit/react";
 import {
   Box,
   Center,
@@ -8,9 +8,9 @@ import {
   Stack,
   useColorModeValue,
   Text,
-} from '@chakra-ui/react';
-import { MouseEventHandler } from 'react';
-import { FiAlertTriangle } from 'react-icons/fi';
+} from "@chakra-ui/react";
+import { MouseEventHandler } from "react";
+import { FiAlertTriangle } from "react-icons/fi";
 import {
   Astronaut,
   Error,
@@ -26,10 +26,12 @@ import {
   RejectedWarn,
   WalletConnectComponent,
   ChainCard,
-} from '../components';
-import { chainName } from '../config';
+} from "../components";
+import { chainName } from "../config";
+import { useDrawerControl } from "./react/useDrawerControl";
 
 export const WalletSection = () => {
+  const { closeDrawer } = useDrawerControl();
   const {
     connect,
     openView,
@@ -52,11 +54,13 @@ export const WalletSection = () => {
   // Events
   const onClickConnect: MouseEventHandler = async (e) => {
     e.preventDefault();
+    closeDrawer();
     await connect();
   };
 
   const onClickOpenView: MouseEventHandler = (e) => {
     e.preventDefault();
+    closeDrawer();
     openView();
   };
 
@@ -69,7 +73,7 @@ export const WalletSection = () => {
       }
       connecting={<Connecting />}
       connected={
-        <Connected buttonText={'My Wallet'} onClick={onClickOpenView} />
+        <Connected buttonText={"My Wallet"} onClick={onClickOpenView} />
       }
       rejected={<Rejected buttonText="Reconnect" onClick={onClickConnect} />}
       error={<Error buttonText="Change Wallet" onClick={onClickOpenView} />}
@@ -109,9 +113,9 @@ export const WalletSection = () => {
 
   return (
     <Center py={16}>
-     <Box maxWidth={"100px"}>
-              {connectWalletButton}
-              </Box>
+      <Box zIndex={10} maxWidth={"100px"}>
+        {connectWalletButton}
+      </Box>
     </Center>
   );
 };

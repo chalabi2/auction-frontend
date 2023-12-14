@@ -54,8 +54,15 @@ import {
   Spinner,
   Link,
   useMediaQuery,
+  Drawer,
+  DrawerBody,
+  DrawerContent,
+  DrawerHeader,
+  DrawerOverlay,
+  MenuIcon,
 } from "@chakra-ui/react";
 import { BsFillMoonStarsFill, BsFillSunFill } from "react-icons/bs";
+import { MdMenu } from "react-icons/md";
 import { AiOutlineCheckCircle, AiOutlineCloseCircle } from "react-icons/ai";
 import { chainName } from "../config";
 import { WalletSection, handleChangeColorModeValue } from "../components";
@@ -63,6 +70,9 @@ import { Chain } from "@chain-registry/types";
 import { SignerOptions } from "@cosmos-kit/core";
 import { AminoTypes } from "@cosmjs/stargate";
 import { BsFillInfoCircleFill } from "react-icons/bs";
+
+import { formatBidAmount, formatTotalBidCost } from "../components/utils/utils";
+import { DrawerControlProvider } from "../components/react/useDrawerControl";
 
 const gravitybridge = { auction };
 const createRPCQueryClient =
@@ -165,7 +175,11 @@ export default function Home() {
   }, []);
 
   const [selectedAuction, setSelectedAuction] = useState<Auction | null>(null);
-  const { isOpen, onOpen, onClose } = useDisclosure();
+  const {
+    isOpen: DrawerIsOpen,
+    onOpen: DrawerOnOpen,
+    onClose: DrawerOnClose,
+  } = useDisclosure();
 
   const handleRowClick = (auction: Auction) => {
     setSelectedAuction(auction);
@@ -244,92 +258,63 @@ export default function Home() {
     }
   };
 
-  const formatBidAmount = (bidAmount: BigNumber.Value) => {
-    // Convert the bid amount to BigNumber for precise calculations
-    const amountInUgraviton = new BigNumber(bidAmount);
-
-    // Convert ugraviton to graviton (1 graviton = 1,000,000 ugraviton)
-    const amountInGraviton = amountInUgraviton.dividedBy(1000000);
-
-    // If the amount is less than 1,000,000 ugraviton, format it with up to 5 decimal places
-    if (amountInUgraviton.isLessThan(1000000)) {
-      return amountInGraviton.toFormat();
-    } else {
-      // For amounts equal or above 1,000,000 ugraviton, show whole number or decimal if present
-      return amountInGraviton.toFormat(
-        amountInGraviton.decimalPlaces() || 0 > 0
-          ? amountInGraviton.decimalPlaces() || 0
-          : 0
-      );
-    }
+  const renderAuctionTable = () => {
+    return (
+      <TableContainer>
+        <Table variant="simple">
+          <Thead>
+            <Tr>
+              <Th>ID</Th>
+              <Th>Amount</Th>
+              {!isLessThan1000px && <Th>Highest Bid</Th>}
+              {!isLessThan1000px && <Th>Bidder</Th>}
+            </Tr>
+          </Thead>
+          <Tbody>
+            {auctionData.map((auction, index) => {
+              const denomInfo = getDenominationInfo(
+                auction.amount?.denom ?? ""
+              );
+              const formattedAmount = formatTokenAmount(
+                auction.amount?.amount || "0",
+                auction.amount?.denom || ""
+              );
+              const formatedBidAmount = formatBidAmount(
+                auction.highestBid?.bidAmount.toString() || 0
+              );
+              return (
+                <Tr
+                  key={index}
+                  _hover={{
+                    bg:
+                      colorMode === "light"
+                        ? "gray.100"
+                        : "rgba(255,255,255,0.1)",
+                    cursor: "pointer",
+                  }}
+                  onClick={() => handleRowClick(auction)}
+                >
+                  <Td>{auction.id.toString()}</Td>
+                  <Td>
+                    {formattedAmount} {denomInfo.symbol}
+                  </Td>
+                  {!isLessThan1000px && (
+                    <Td>
+                      {auction.highestBid ? formatedBidAmount : "No Bid"}{" "}
+                      {auction.highestBid ? "GRAV" : ""}{" "}
+                    </Td>
+                  )}
+                  {!isLessThan1000px && (
+                    <Td>{auction.highestBid?.bidderAddress} </Td>
+                  )}
+                </Tr>
+              );
+            })}
+          </Tbody>
+        </Table>
+      </TableContainer>
+    );
   };
-
-  const formatTotalBidCost = () => {
-    // Convert bidAmountInput to a number
-    const bidAmountNumber = Number(bidAmountInput);
-
-    // Convert bidFeeAmount to a number
-    const bidFeeAmountNumber = Number(bidFeeAmount);
-
-    // Calculate the total bid cost in smaller units (ugraviton)
-    const totalBidCostUgraviton = bidAmountNumber + bidFeeAmountNumber;
-
-    // Convert the total bid cost back to graviton (1 graviton = 1,000,000 ugraviton)
-    const totalBidCostGraviton = totalBidCostUgraviton / 1e6;
-
-    // Format and return the total bid cost
-    return totalBidCostGraviton.toFixed(6).toString() + " GRAVITON";
-  };
-
-  const renderAuctionTable = () => (
-    <TableContainer>
-      <Table variant="simple">
-        <Thead>
-          <Tr>
-            <Th>ID</Th>
-            <Th>Amount</Th>
-            <Th>Highest Bid</Th>
-            <Th>Bidder</Th>
-          </Tr>
-        </Thead>
-        <Tbody>
-          {auctionData.map((auction, index) => {
-            const denomInfo = getDenominationInfo(auction.amount?.denom ?? "");
-            const formattedAmount = formatTokenAmount(
-              auction.amount?.amount || "0",
-              auction.amount?.denom || ""
-            );
-            const formatedBidAmount = formatBidAmount(
-              auction.highestBid?.bidAmount.toString() || 0
-            );
-            return (
-              <Tr
-                key={index}
-                _hover={{
-                  bg:
-                    colorMode === "light"
-                      ? "gray.100"
-                      : "rgba(255,255,255,0.1)",
-                  cursor: "pointer",
-                }}
-                onClick={() => handleRowClick(auction)}
-              >
-                <Td>{auction.id.toString()}</Td>
-                <Td>
-                  {formattedAmount} {denomInfo.symbol}
-                </Td>
-                <Td>
-                  {auction.highestBid ? formatedBidAmount : "No Bid"}{" "}
-                  {auction.highestBid ? "GRAV" : ""}{" "}
-                </Td>
-                <Td>{auction.highestBid?.bidderAddress} </Td>
-              </Tr>
-            );
-          })}
-        </Tbody>
-      </Table>
-    </TableContainer>
-  );
 
   const bidFeeAmount = auctionFeePrice.toString();
 
@@ -400,7 +385,7 @@ export default function Home() {
                     {selectedAuction.highestBid?.bidderAddress}
                   </Text>
                 ) : (
-                  <StatNumber>No Bid</StatNumber>
+                  <StatNumber>No Bidder</StatNumber>
                 )}
               </Stat>
               <Flex mb={4} flexDir="row" align="center">
@@ -463,7 +448,7 @@ export default function Home() {
               Total Bid Cost
             </Text>
             <Text fontSize={"sm"} fontWeight={"bold"}>
-              {formatTotalBidCost()}
+              {formatTotalBidCost(bidAmountInput, bidFeeAmount)}
             </Text>
           </Flex>
         </ModalBody>
@@ -471,78 +456,13 @@ export default function Home() {
     </Modal>
   );
 
-  // const handleBidClick = async () => {
-  //   if (!selectedAuction) return;
-
-  //   // Call createBidTransaction to get the context and tx
-  //   const bidTransaction = createBidTransaction(
-  //     address,
-  //     selectedAuction.id.low,
-  //     3000000,  // replace with actual bid amount
-  //     2000000,  // replace with actual bid fee
-  //     accountData
-  //   );
-
-  //   if (!bidTransaction) {
-  //     console.error("Failed to create transaction");
-  //     return;
-  //   }
-
-  //   const { context, tx } = bidTransaction;
-
-  //   try {
-  //     // Sign the transaction using Keplr
-  //     const signResponse = await window.keplr?.signDirect(
-  //       context.chain.cosmosChainId,
-  //       context.sender.accountAddress,
-  //       {
-  //         bodyBytes: tx.signDirect.body.toBinary(),
-  //         authInfoBytes: tx.signDirect.authInfo.toBinary(),
-  //         chainId: context.chain.cosmosChainId,
-  //         accountNumber: new Long(context.sender.accountNumber),
-  //       },
-  //     );
-
-  //     if (!signResponse) throw new Error("Failed to sign the transaction");
-
-  //     const signatures = [
-  //       new Uint8Array(Buffer.from(signResponse.signature.signature, 'base64')),
-  //     ];
-
-  //     // Create the signed transaction
-  //     const signedTx = createTxRaw(
-  //       signResponse.signed.bodyBytes,
-  //       signResponse.signed.authInfoBytes,
-  //       signatures,
-  //     );
-
-  //     const nodeUrl = "https://gravitychain.io:1317"
-
-  //     const postOptions = {
-  //       method: 'POST',
-  //       headers: { 'Content-Type': 'application/json' },
-  //       body: generatePostBodyBroadcast(signedTx),
-  //     }
-
-  //     const broadcastEndpoint = `${nodeUrl}${generateEndpointBroadcast()}`
-  //     const broadcastPost = await fetch(
-  //       broadcastEndpoint,
-  //       postOptions,
-  //     )
-
-  //     const response = await broadcastPost.json()
-  //     response()
-  //   } catch (error) {
-  //     console.error("Error during transaction signing or broadcasting:", error);
-  //     // ... error handling
-  //   }
-  // };
-
   const disabledTooltipMessage = !address
     ? "Connect your wallet to place a bid"
     : bidAmountInput === "0"
     ? "Bid amount must be greater than 0"
     : "";
+
+  const { isOpen, onOpen, onClose } = useDisclosure();
 
   return (
     <Container maxW="8xl" py={0}>
@@ -554,8 +474,8 @@ export default function Home() {
 
       <Flex justifyContent="space-between" alignItems="center" mb={4}>
         <Image
-          mt={"10px"}
-          height={"60px"}
+          mt={{ base: "30px", md: "10px" }}
+          height={{ base: "40px", sm: "40px", md: "60px" }}
           src={handleChangeColorModeValue(
             colorMode,
             "logolight.svg",
@@ -588,6 +508,62 @@ export default function Home() {
               </Button>
             </>
           )}
+          {isLessThan1000px && (
+            <DrawerControlProvider closeDrawer={DrawerOnClose}>
+              <>
+                <Button top={"20px"} left={"60px"} onClick={DrawerOnOpen}>
+                  <Icon name="menu" as={MdMenu} />
+                </Button>
+
+                <Drawer
+                  isOpen={DrawerIsOpen}
+                  placement="left"
+                  onClose={DrawerOnClose}
+                >
+                  <DrawerOverlay zIndex={0} />
+                  <DrawerContent zIndex={0}>
+                    <DrawerHeader borderBottomWidth="1px">
+                      <Image
+                        height="40px"
+                        src={handleChangeColorModeValue(
+                          colorMode,
+                          "logolight.svg",
+                          "logodark.svg"
+                        )}
+                        alt="Gravity Bridge Logo"
+                      />
+                    </DrawerHeader>
+                    <DrawerBody zIndex={0}>
+                      <Flex
+                        gap={-6}
+                        flexDir={"column"}
+                        justifyContent="space-between"
+                        alignItems={"left"}
+                      >
+                        <Button
+                          mt="40px"
+                          variant="outline"
+                          p={0}
+                          onClick={toggleColorMode}
+                        >
+                          <Icon
+                            as={handleChangeColorModeValue(
+                              colorMode,
+                              BsFillMoonStarsFill,
+                              BsFillSunFill
+                            )}
+                          />
+                        </Button>
+                        <Box mr={"200px"}>
+                          <WalletSection />
+                        </Box>
+                      </Flex>
+                    </DrawerBody>
+                  </DrawerContent>
+                </Drawer>
+              </>
+            </DrawerControlProvider>
+          )}
         </Flex>
       </Flex>
       <Container maxW="5xl" py={4}>
@@ -614,17 +590,29 @@ export default function Home() {
             </Flex>
           </Flex>
         )}
+        {isLessThan1000px && (
+          <Flex mt={"30px"} justifyContent="space-between" alignItems="center">
+            <Heading as="h2" size="lg" fontWeight={"light"} letterSpacing="4">
+              Fee Auction
+            </Heading>
+            <Text fontWeight={"light"}>
+              Time Remaining: {auctionTimer.remainingTime}
+            </Text>
+            <Flex alignItems="center">
+              <Tooltip label="Auction refetch timer" aria-label="A tooltip">
+                <CircularProgress value={(timer / 30) * 100} color="blue.400">
+                  <CircularProgressLabel>{timer}</CircularProgressLabel>
+                </CircularProgress>
+              </Tooltip>
+            </Flex>
+          </Flex>
+        )}
         <Center mt={8} mb={16}>
           {renderAuctionModal()}
           {isLoading ? (
             <Skeleton mt="4" noOfLines={12}>
               <SkeletonText spacing={12} />
             </Skeleton>
-          ) : isLessThan1000px ? (
-            <Text color="gray.600" fontSize="lg" textAlign="center">
-              This breakpoint is not supported, please either rotate to
-              landscape or switch to a desktop.
-            </Text>
           ) : (
             auctionData.length > 0 && renderAuctionTable()
           )}
@@ -644,3 +632,70 @@ export default function Home() {
     </Container>
   );
 }
+
+// const handleBidClick = async () => {
+//   if (!selectedAuction) return;
+
+//   // Call createBidTransaction to get the context and tx
+//   const bidTransaction = createBidTransaction(
+//     address,
+//     selectedAuction.id.low,
+//     3000000,  // replace with actual bid amount
+//     2000000,  // replace with actual bid fee
+//     accountData
+//   );
+
+//   if (!bidTransaction) {
+//     console.error("Failed to create transaction");
+//     return;
+//   }
+
+//   const { context, tx } = bidTransaction;
+
+//   try {
+//     // Sign the transaction using Keplr
+//     const signResponse = await window.keplr?.signDirect(
+//       context.chain.cosmosChainId,
+//       context.sender.accountAddress,
+//       {
+//         bodyBytes: tx.signDirect.body.toBinary(),
+//         authInfoBytes: tx.signDirect.authInfo.toBinary(),
+//         chainId: context.chain.cosmosChainId,
+//         accountNumber: new Long(context.sender.accountNumber),
+//       },
+//     );
+
+//     if (!signResponse) throw new Error("Failed to sign the transaction");
+
+//     const signatures = [
+//       new Uint8Array(Buffer.from(signResponse.signature.signature, 'base64')),
+//     ];
+
+//     // Create the signed transaction
+//     const signedTx = createTxRaw(
+//       signResponse.signed.bodyBytes,
+//       signResponse.signed.authInfoBytes,
+//       signatures,
+//     );
+
+//     const nodeUrl = "https://gravitychain.io:1317"
+
+//     const postOptions = {
+//       method: 'POST',
+//       headers: { 'Content-Type': 'application/json' },
+//       body: generatePostBodyBroadcast(signedTx),
+//     }
+
+//     const broadcastEndpoint = `${nodeUrl}${generateEndpointBroadcast()}`
+//     const broadcastPost = await fetch(
+//       broadcastEndpoint,
+//       postOptions,
+//     )
+
+//     const response = await broadcastPost.json()
+//     response()
+//   } catch (error) {
+//     console.error("Error during transaction signing or broadcasting:", error);
+//     // ... error handling
+//   }
+// };
