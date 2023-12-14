@@ -511,7 +511,7 @@ export default function Home() {
           {isLessThan1000px && (
             <DrawerControlProvider closeDrawer={DrawerOnClose}>
               <>
-                <Button top={"20px"} left={"60px"} onClick={DrawerOnOpen}>
+                <Button top={"20px"} left={"40px"} onClick={DrawerOnOpen}>
                   <Icon name="menu" as={MdMenu} />
                 </Button>
 
@@ -596,7 +596,7 @@ export default function Home() {
               Fee Auction
             </Heading>
             <Text fontWeight={"light"}>
-              Time Remaining: {auctionTimer.remainingTime}
+              Period: {auctionTimer.remainingTime}
             </Text>
             <Flex alignItems="center">
               <Tooltip label="Auction refetch timer" aria-label="A tooltip">
