@@ -114,6 +114,7 @@ export default function Home() {
     });
     const times = await clientAuction.auction.v1.auctionPeriod();
     const params = await clientAuction.auction.v1.params();
+    console.log(params);
     const auctionFeePrice = params.params.minBidFee;
     setAuctionFeePrice(auctionFeePrice);
     const endBlockHeight = times.auctionPeriod?.endBlockHeight.toString() || 0;
@@ -428,7 +429,7 @@ export default function Home() {
               <Button
                 isDisabled={!address || bidAmountInput === "0"}
                 onClick={handleBidClick(
-                  String(selectedAuction?.id),
+                  selectedAuction?.id.toString() ?? "",
                   bidAmountInput,
                   bidFeeAmount
                 )}

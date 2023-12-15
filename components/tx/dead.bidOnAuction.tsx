@@ -56,9 +56,9 @@ export const bidOnAuction = (
   setResp: (resp: string) => any,
   chainName: string,
   address: string,
-  auctionId: string,
-  bidAmount: string,
-  bidFeeAmount: string,
+  auctionId: string, // or string if the ID is not a number
+  bidAmount: string, // amount in ugraviton
+  bidFeeAmount: string, // fee amount in ugraviton
   toast: ReturnType<typeof useToast>
 ) => {
   return async () => {
@@ -68,44 +68,16 @@ export const bidOnAuction = (
       return;
     }
 
-    const { bid } = auction.v1.MessageComposer.fromPartial;
+    const { bid } = auction.v1.MessageComposer.withTypeUrl;
 
     const msg = bid({
-      auctionId: auctionId,
+      auctionId: new Long(Number(auctionId)),
       bidder: address,
-      amount: bidAmount,
-      bidFee: bidFeeAmount,
+      amount: new Long(Number(bidAmount)),
+      bidFee: new Long(Number(bidFeeAmount)),
     });
 
-    const chain: Chain = chains.find(
-      ({ chain_name }) => chain_name === chainName
-    ) as Chain;
-
-    const signingStargateClientOptions = signerOptions.signingStargate?.(chain);
-
-    const aminoTypes = signingStargateClientOptions?.aminoTypes;
-
-    const msgBid = aminoTypes?.toAmino({
-      typeUrl: "/auction.v1.MsgBid",
-      value: {
-        auctionId: auctionId,
-        bidder: address,
-        amount: bidAmount,
-        bidFee: bidFeeAmount,
-      },
-    });
-
-    const encodeObjectBid: EncodeObject = {
-      typeUrl: "gravity/MsgBid",
-      value: {
-        auctionId: auctionId,
-        bidder: address,
-        amount: bidAmount,
-        bidFee: bidFeeAmount,
-      },
-    };
-
-    const memo: string = "Submitted from Gravity Bridge Fee Auction App";
+    const memo: string = "Submitted by Gravity Bridge Fee Auction App";
 
     const fee: StdFee = {
       gas: "1000000",
