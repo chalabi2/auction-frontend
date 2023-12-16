@@ -1,17 +1,14 @@
 import { useEffect, useState } from "react";
 import Head from "next/head";
 import { useChain } from "@cosmos-kit/react";
-import BigNumber from "bignumber.js";
-import {
-  auction,
-  auctionAminoConverters,
-  auctionProtoRegistry,
-} from "@chalabi/gravity-bridgejs/dist/codegen";
+
+import { auction } from "@chalabi/gravity-bridgejs/dist/codegen";
 import { Auction } from "@chalabi/gravity-bridgejs/dist/codegen/auction/v1/auction";
 import { getDenominationInfo, formatTokenAmount } from "../config/denoms";
 import { FaSyncAlt } from "react-icons/fa";
-import { bidOnAuction } from "../components/tx/dead.bidOnAuction";
-import { Registry } from "@cosmjs/proto-signing";
+import { bidOnAuction } from "../tx/bidOnAuction";
+import getCompressedPublicKey from "../tx/metaMaskAccount";
+
 import {
   Heading,
   Text,
@@ -67,12 +64,10 @@ import { MdMenu } from "react-icons/md";
 import { AiOutlineCheckCircle, AiOutlineCloseCircle } from "react-icons/ai";
 import { chainName } from "../config";
 import { WalletSection, handleChangeColorModeValue } from "../components";
-import { Chain } from "@chain-registry/types";
-import { SignerOptions } from "@cosmos-kit/core";
-import { AminoTypes } from "@cosmjs/stargate";
+
 import { BsFillInfoCircleFill } from "react-icons/bs";
 
-import { formatBidAmount, formatTotalBidCost } from "../components/utils/utils";
+import { formatBidAmount, formatTotalBidCost } from "../utils/utils";
 import { DrawerControlProvider } from "../components/react/useDrawerControl";
 
 const gravitybridge = { auction };
@@ -114,7 +109,7 @@ export default function Home() {
     });
     const times = await clientAuction.auction.v1.auctionPeriod();
     const params = await clientAuction.auction.v1.params();
-    console.log(params);
+
     const auctionFeePrice = params.params.minBidFee;
     setAuctionFeePrice(auctionFeePrice);
     const endBlockHeight = times.auctionPeriod?.endBlockHeight.toString() || 0;
@@ -142,7 +137,6 @@ export default function Home() {
     const clientAuction = await createRPCQueryClient({
       rpcEndpoint: "https://nodes.chandrastation.com/rpc/gravity/",
     });
-
     setIsLoading(true);
     try {
       // Fetch auctions
@@ -190,20 +184,6 @@ export default function Home() {
 
   const [response, setResponse] = useState("");
 
-  const signerOptions: SignerOptions = {
-    signingStargate: (chain: Chain) => {
-      const registry = new Registry(auctionProtoRegistry);
-      const aminoTypes = new AminoTypes({
-        ...auctionAminoConverters,
-        "gravity/MsgBid": auctionAminoConverters["/auction.v1.MsgBid"],
-      });
-      return {
-        aminoTypes: aminoTypes,
-        registry: registry,
-      };
-    },
-  };
-
   const [isSigning, setIsSigning] = useState(false);
   const [isSigned, setIsSigned] = useState(false);
   const [isError, setIsError] = useState(false);
@@ -223,9 +203,7 @@ export default function Home() {
       try {
         await bidOnAuction(
           getSigningStargateClient,
-          signerOptions,
           setResponse,
-          chainName ?? "",
           address ?? "",
           auctionId,
           bidAmount,
@@ -431,7 +409,7 @@ export default function Home() {
                 onClick={handleBidClick(
                   selectedAuction?.id.toString() ?? "",
                   bidAmountInput,
-                  bidFeeAmount
+                  bidFeeAmount.toString()
                 )}
                 colorScheme="blue"
                 mb={6}
@@ -493,19 +471,20 @@ export default function Home() {
         >
           {!isLessThan1000px && (
             <>
-              <Box paddingX={"90px"}>
+              <Flex
+                alignItems={"center"}
+                gap={16}
+                flexDir={"row"}
+                paddingX={"90px"}
+              >
                 <WalletSection />
-              </Box>
+              </Flex>
 
               <Button variant="outline" p={0} onClick={toggleColorMode}>
-                {/* eslint-disable-next-line  */}
                 <Icon
-                  as={handleChangeColorModeValue(
-                    colorMode,
-                    // eslint-disable-next-line
-                    BsFillMoonStarsFill,
-                    BsFillSunFill
-                  )}
+                  as={
+                    colorMode === "light" ? BsFillMoonStarsFill : BsFillSunFill
+                  }
                 />
               </Button>
             </>
@@ -549,11 +528,11 @@ export default function Home() {
                           onClick={toggleColorMode}
                         >
                           <Icon
-                            as={handleChangeColorModeValue(
-                              colorMode,
-                              BsFillMoonStarsFill,
-                              BsFillSunFill
-                            )}
+                            as={
+                              colorMode === "light"
+                                ? BsFillMoonStarsFill
+                                : BsFillSunFill
+                            }
                           />
                         </Button>
                         <Box mr={"200px"}>
@@ -636,70 +615,3 @@ export default function Home() {
     </Container>
   );
 }
-
-// const handleBidClick = async () => {
-//   if (!selectedAuction) return;
-
-//   // Call createBidTransaction to get the context and tx
-//   const bidTransaction = createBidTransaction(
-//     address,
-//     selectedAuction.id.low,
-//     3000000,  // replace with actual bid amount
-//     2000000,  // replace with actual bid fee
-//     accountData
-//   );
-
-//   if (!bidTransaction) {
-//     console.error("Failed to create transaction");
-//     return;
-//   }
-
-//   const { context, tx } = bidTransaction;
-
-//   try {
-//     // Sign the transaction using Keplr
-//     const signResponse = await window.keplr?.signDirect(
-//       context.chain.cosmosChainId,
-//       context.sender.accountAddress,
-//       {
-//         bodyBytes: tx.signDirect.body.toBinary(),
-//         authInfoBytes: tx.signDirect.authInfo.toBinary(),
-//         chainId: context.chain.cosmosChainId,
-//         accountNumber: new Long(context.sender.accountNumber),
-//       },
-//     );
-
-//     if (!signResponse) throw new Error("Failed to sign the transaction");
-
-//     const signatures = [
-//       new Uint8Array(Buffer.from(signResponse.signature.signature, 'base64')),
-//     ];
-
-//     // Create the signed transaction
-//     const signedTx = createTxRaw(
-//       signResponse.signed.bodyBytes,
-//       signResponse.signed.authInfoBytes,
-//       signatures,
-//     );
-
-//     const nodeUrl = "https://gravitychain.io:1317"
-
-//     const postOptions = {
-//       method: 'POST',
-//       headers: { 'Content-Type': 'application/json' },
-//       body: generatePostBodyBroadcast(signedTx),
-//     }
-
-//     const broadcastEndpoint = `${nodeUrl}${generateEndpointBroadcast()}`
-//     const broadcastPost = await fetch(
-//       broadcastEndpoint,
-//       postOptions,
-//     )
-
-//     const response = await broadcastPost.json()
-//     response()
-//   } catch (error) {
-//     console.error("Error during transaction signing or broadcasting:", error);
-//     // ... error handling
-//   }
-// };

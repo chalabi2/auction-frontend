@@ -1,8 +1,20 @@
 import { useEffect, useState } from 'react';
 import { generateEndpointAccount } from '@gravity-bridge/provider'
 
+interface AccountData {
+    account: BaseAccount;
+}
+
+interface BaseAccount {
+    "@type": string;
+    address: string;
+    pub_key: string | null;
+    account_number: string;
+    sequence: string;
+}
+
 export function useQueryAccount(address: string | undefined) {
-    const [accountData, setAccountData] = useState<any>(null);
+    const [accountData, setAccountData] = useState<AccountData | null>(null);
     const [loading, setLoading] = useState<boolean>(true);
     const [error, setError] = useState<string | null>(null);
 
@@ -13,7 +25,7 @@ export function useQueryAccount(address: string | undefined) {
             return;
         }
 
-        const nodeUrl = 'https://nodes.chandrastation.com/gravity/rpc/';
+        const nodeUrl = 'https://nodes.chandrastation.com/api/gravity/';
         const queryEndpoint = `${nodeUrl}${generateEndpointAccount(address)}`;
 
         const fetchData = async () => {
@@ -27,12 +39,14 @@ export function useQueryAccount(address: string | undefined) {
                     queryEndpoint,
                     restOptions,
                 )
-                const result = await rawResult.json()
-                if (!result.ok) {
-                    throw new Error('Failed to fetch account data');
+                const result = await rawResult.json();
+                if (result && result.account) {
+                    setAccountData(result as AccountData);
+                } else {
+                    throw new Error('Invalid account data format');
                 }
-                console.log(result)
-                setAccountData(result.account);
+
+                setAccountData(result);
             } catch (error: any) {
                 setError(error.message);
             } finally {

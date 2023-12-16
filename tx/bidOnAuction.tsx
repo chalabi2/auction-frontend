@@ -1,20 +1,10 @@
-import Long from "long";
 import { auction } from "@chalabi/gravity-bridgejs/dist/codegen";
-import {
-  MsgBid,
-  MsgBidAminoMsg,
-} from "@chalabi/gravity-bridgejs/dist/codegen/auction/v1/msgs";
 import { SigningStargateClient, StdFee } from "@cosmjs/stargate";
-import { ChainName, SignerOptions } from "@cosmos-kit/core";
-import { Chain } from "@chain-registry/types";
-import { assets, chains } from "chain-registry";
-import { EncodeObject } from "@cosmjs/proto-signing";
 import { Box, Link, useToast, Text } from "@chakra-ui/react";
 
 const showSuccessToast = (
   toast: ReturnType<typeof useToast>,
-  txHash: string,
-  chainName: ChainName
+  txHash: string
 ) => {
   const mintscanUrl = `https://www.mintscan.io/gravity-bridge/txs/${txHash}`;
   toast({
@@ -49,20 +39,16 @@ const showErrorToast = (
 };
 
 export const bidOnAuction = (
-  getSigningStargateClient: (
-    signerOptions: SignerOptions
-  ) => Promise<SigningStargateClient>,
-  signerOptions: SignerOptions,
+  getSigningStargateClient: () => Promise<SigningStargateClient>,
   setResp: (resp: string) => any,
-  chainName: string,
   address: string,
-  auctionId: string, // or string if the ID is not a number
-  bidAmount: string, // amount in ugraviton
-  bidFeeAmount: string, // fee amount in ugraviton
+  auctionId: string,
+  bidAmount: string,
+  bidFeeAmount: string,
   toast: ReturnType<typeof useToast>
 ) => {
   return async () => {
-    const stargateClient = await getSigningStargateClient(signerOptions);
+    const stargateClient = await getSigningStargateClient();
     if (!stargateClient || !address) {
       console.error("stargateClient undefined or address undefined.");
       return;
@@ -71,16 +57,16 @@ export const bidOnAuction = (
     const { bid } = auction.v1.MessageComposer.withTypeUrl;
 
     const msg = bid({
-      auctionId: new Long(Number(auctionId)),
+      auctionId: BigInt(auctionId),
       bidder: address,
-      amount: new Long(Number(bidAmount)),
-      bidFee: new Long(Number(bidFeeAmount)),
+      amount: BigInt(bidAmount),
+      bidFee: BigInt(bidFeeAmount),
     });
 
     const memo: string = "Submitted by Gravity Bridge Fee Auction App";
 
     const fee: StdFee = {
-      gas: "1000000",
+      gas: "100000",
       amount: [
         {
           amount: "1000000",
@@ -97,7 +83,7 @@ export const bidOnAuction = (
         memo
       );
       setResp(JSON.stringify(response, null, 2));
-      showSuccessToast(toast, response.transactionHash, chainName);
+      showSuccessToast(toast, response.transactionHash);
     } catch (error) {
       console.error("Error signing and sending transaction:", error);
       if (error instanceof Error) {

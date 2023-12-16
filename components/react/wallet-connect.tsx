@@ -4,7 +4,7 @@ import { IoWallet } from "react-icons/io5";
 import { ConnectWalletType } from "../types";
 import { FiAlertTriangle } from "react-icons/fi";
 import { WalletStatus } from "@cosmos-kit/core";
-import { useDrawerControl } from "./useDrawerControl";
+
 export const ConnectWalletButton = ({
   buttonText,
   isLoading,

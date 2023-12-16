@@ -1,6 +1,6 @@
 {
   "name": "@chalabi/gravity-auction",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "homepage": "https://auction.gravitypulse.app",
   "private": true,
   "scripts": {
@@ -15,9 +15,11 @@
     "@chain-registry/types": "0.17.0",
     "@chakra-ui/icons": "2.0.12",
     "@chakra-ui/react": "2.5.1",
-    "@chalabi/gravity-bridgejs": "^0.0.7",
-    "@cosmjs/cosmwasm-stargate": "0.31.1",
-    "@cosmjs/stargate": "0.31.1",
+    "@chalabi/gravity-bridgejs": "^0.1.2",
+    "@cosmjs/amino": "0.29.4",
+    "@cosmjs/proto-signing": "0.29.4",
+    "@cosmjs/stargate": "0.29.4",
+    "@cosmjs/tendermint-rpc": "^0.29.4",
     "@cosmos-kit/core": "2.6.6",
     "@cosmos-kit/cosmostation": "2.3.11",
     "@cosmos-kit/keplr": "2.3.13",
@@ -25,6 +27,8 @@
     "@cosmos-kit/react": "2.8.4",
     "@emotion/react": "11.10.6",
     "@emotion/styled": "11.10.6",
+    "@ethersproject/hash": "^5.7.0",
+    "@ethersproject/signing-key": "^5.7.0",
     "@gravity-bridge/address-converter": "^0.0.1",
     "@gravity-bridge/eip712": "^0.0.6",
     "@gravity-bridge/proto": "^0.0.6",
@@ -47,6 +51,7 @@
     "@types/react-dom": "18.0.9",
     "eslint": "8.28.0",
     "eslint-config-next": "13.0.5",
+    "ts-loader": "^9.5.1",
     "typescript": "4.9.3"
   }
 }

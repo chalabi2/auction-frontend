@@ -10,19 +10,23 @@ import { wallets as leapWallets } from "@cosmos-kit/leap";
 
 import { assets, chains } from "chain-registry";
 
-import { SignerOptions } from "@cosmos-kit/core";
-import "@interchain-ui/react/styles";
+import { MainWalletBase, SignerOptions } from "@cosmos-kit/core";
 import { Chain } from "@chain-registry/types";
+import "@interchain-ui/react/styles";
+
 import {
   auctionAminoConverters,
   auctionProtoRegistry,
 } from "@chalabi/gravity-bridgejs/dist/codegen";
-import { AminoTypes } from "@cosmjs/stargate";
+import { AminoTypes, SigningStargateClientOptions } from "@cosmjs/stargate";
 import { Registry } from "@cosmjs/proto-signing";
 
 function CreateCosmosApp({ Component, pageProps }: AppProps) {
   const signerOptions: SignerOptions = {
-    signingStargate: (chain: Chain) => {
+    //@ts-ignore
+    signingStargate: (
+      chain: Chain
+    ): SigningStargateClientOptions | undefined => {
       const registry = new Registry(auctionProtoRegistry);
       const aminoTypes = new AminoTypes(auctionAminoConverters);
       return {
@@ -45,7 +49,13 @@ function CreateCosmosApp({ Component, pageProps }: AppProps) {
         }}
         chains={chains}
         assetLists={assets}
-        wallets={[...keplrWallets, ...cosmostationWallets, ...leapWallets]}
+        wallets={
+          [
+            ...keplrWallets,
+            ...cosmostationWallets,
+            ...leapWallets,
+          ] as unknown as MainWalletBase[]
+        }
         walletConnectOptions={{
           signClient: {
             projectId: "a8510432ebb71e6948cfd6cde54b70f7",
@@ -53,7 +63,7 @@ function CreateCosmosApp({ Component, pageProps }: AppProps) {
             metadata: {
               name: "Gravity Bridge Fee App",
               description: "Gravity Bridge Fee Auction App",
-              url: "https://docs.cosmoskit.com/",
+              url: "https://auction.gravitypulse.app",
               icons: [],
             },
           },
