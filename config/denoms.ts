@@ -10,6 +10,15 @@ export const chainDenoms: ChainDenominations = {
       logoURI: 'https://assets.coingecko.com/coins/images/9956/thumb/4943.png?1636636734',
       priceDenom: 'dai'
     },
+    gravity0x30f271C9E86D2B7d00a6376Cd96A1cFBD5F0b9b3: {
+        name: 'Decenter',
+        denom: 'gravity0x30f271C9E86D2B7d00a6376Cd96A1cFBD5F0b9b3',
+        symbol: 'DEC',
+        coinId: 'decenter',
+        decimals: 18,
+        logoURI: 'https://assets.coingecko.com/coins/images/12681/thumb/UST.png?1601612407',
+        priceDenom: 'dec'
+        },
     gravity0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2: {
       name: 'Wrapped ETH',
       denom: 'gravity0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2',

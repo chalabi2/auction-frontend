@@ -7,7 +7,6 @@ import { Auction } from "@chalabi/gravity-bridgejs/dist/codegen/auction/v1/aucti
 import { getDenominationInfo, formatTokenAmount } from "../config/denoms";
 import { FaSyncAlt } from "react-icons/fa";
 import { bidOnAuction } from "../tx/bidOnAuction";
-import getCompressedPublicKey from "../tx/metaMaskAccount";
 
 import {
   Heading,
@@ -82,6 +81,7 @@ export default function Home() {
     useChain(chainName);
 
   const [auctionData, setAuctionData] = useState<Auction[]>([]);
+  console.log(auctionData);
   const [isLoading, setIsLoading] = useState(false);
   const [timer, setTimer] = useState(30);
 
@@ -296,7 +296,7 @@ export default function Home() {
     );
   };
 
-  const bidFeeAmount = auctionFeePrice.toString();
+  const bidFeeAmount = `${auctionFeePrice.toString()}`;
 
   const renderAuctionModal = () => (
     <Modal isOpen={isOpen} onClose={onClose}>
