@@ -54,7 +54,7 @@ export const createBidTransaction = (
         gas: '200000',
     };
   
-    const memo = ''; // Include any memo if needed
+    const memo = 'Test'; // Include any memo if needed
   
     const context: TxContext = {
         chain,
