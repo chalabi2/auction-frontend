@@ -172,6 +172,15 @@ export const chainDenoms: ChainDenominations = {
       logoURI: 'https://assets.coingecko.com/coins/images/7598/thumb/wrapped_bitcoin_wbtc.png?1548822744',
       priceDenom: 'wrapped-bitcoin'
     },
+    gravity0x7D1AfA7B718fb893dB30A3aBc0Cfc608AaCfeBB0: {
+      name: 'Matic Token',
+      denom: 'gravity0x7D1AfA7B718fb893dB30A3aBc0Cfc608AaCfeBB0',
+      symbol: 'MATIC',
+      coinId: 'matic-network',
+      decimals: 18,
+      logoURI: 'https://assets.coingecko.com/coins/images/4713/thumb/matic___polygon.jpg?1612939050',
+      priceDenom: 'matic'
+    },
     gravity0xe28b3B32B6c345A34Ff64674606124Dd5Aceca30: {
         name: 'Injective',
         denom: 'gravity0xe28b3B32B6c345A34Ff64674606124Dd5Aceca30',
