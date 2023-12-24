@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react';
 import { generateEndpointAccount } from '@gravity-bridge/provider'
 
-interface AccountData {
+export interface AccountData {
     account: BaseAccount;
 }
 
-interface BaseAccount {
+export interface BaseAccount {
     "@type": string;
     address: string;
     pub_key: string | null;

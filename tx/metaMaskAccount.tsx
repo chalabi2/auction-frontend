@@ -1,4 +1,3 @@
-// Declare the Ethereum property on the Window interface
 declare global {
   interface Window {
     ethereum: any;

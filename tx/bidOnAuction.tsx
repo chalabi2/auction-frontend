@@ -63,10 +63,10 @@ export const bidOnAuction = (
       bidFee: bidFeeAmount,
     });
 
-    const memo: string = "Submitted by Gravity Bridge Fee Auction App";
+    const memo: string = "Submitted by The Gravity Bridge Fee Auction App";
 
     const fee: StdFee = {
-      gas: "100000",
+      gas: "300000",
       amount: [
         {
           amount: "1000000",

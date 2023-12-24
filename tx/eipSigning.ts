@@ -1,4 +1,4 @@
-import { MsgBidParams, createTxMsgBid, TxContext } from '@gravity-bridge/transactions'
+import { MsgBidParams, createTxMsgBid, TxContext} from '@gravity-bridge/transactions'
 
 export interface Fee {
     amount: string;
@@ -70,6 +70,8 @@ export const createBidTransaction = (
     };
   
     const tx = createTxMsgBid(context, params);
+
+    
 
     return { tx, context };
 };

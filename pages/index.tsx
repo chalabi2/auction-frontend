@@ -68,6 +68,12 @@ import { BsFillInfoCircleFill } from "react-icons/bs";
 
 import { formatBidAmount, formatTotalBidCost } from "../utils/utils";
 import { DrawerControlProvider } from "../components/react/useDrawerControl";
+import getCompressedPublicKeyAndEthAddress from "../tx/metaMaskAccount";
+import { ethToGravity } from "@gravity-bridge/address-converter";
+import { createBidTransaction } from "../tx/eipSigning";
+import { useQueryAccount } from "../utils/queryAccount";
+import { TxContext } from "@gravity-bridge/transactions";
+import { TxPayload } from "@gravity-bridge/transactions/dist/messages/common";
 
 const gravitybridge = { auction };
 const createRPCQueryClient =
@@ -81,7 +87,7 @@ export default function Home() {
     useChain(chainName);
 
   const [auctionData, setAuctionData] = useState<Auction[]>([]);
-  console.log(auctionData);
+
   const [isLoading, setIsLoading] = useState(false);
   const [timer, setTimer] = useState(30);
 
@@ -444,6 +450,78 @@ export default function Home() {
 
   const { isOpen, onOpen, onClose } = useDisclosure();
 
+  // type PublicKeyRetrievedHandler = (
+  //   publicKey: string,
+  //   ethAddress: string
+  // ) => void;
+
+  // interface MetaMaskButtonProps {
+  //   onPublicKeyRetrieved: PublicKeyRetrievedHandler;
+  // }
+
+  // const MetaMaskButton: React.FC<MetaMaskButtonProps> = ({
+  //   onPublicKeyRetrieved,
+  // }) => {
+  //   const handleButtonClick = async () => {
+  //     try {
+  //       const { compressedPublicKey, ethAddress } =
+  //         await getCompressedPublicKeyAndEthAddress();
+  //       // Call the callback function with the public key and address
+  //       onPublicKeyRetrieved(compressedPublicKey, ethAddress);
+  //     } catch (error: any) {
+  //       console.error("Error:", error.message);
+  //     }
+  //   };
+
+  //   return <Button onClick={handleButtonClick}>MetaMask</Button>;
+  // };
+
+  // const [transaction, setTransaction] = useState<TxPayload | null>(null);
+  // console.log(transaction);
+  // const [txContext, setTxContext] = useState<TxContext | null>(null);
+  // console.log(txContext);
+
+  // const [publicKey, setPublicKey] = useState("");
+  // const [ethAddress, setEthAddress] = useState("");
+
+  // const handlePublicKeyRetrieved: PublicKeyRetrievedHandler = (pk, address) => {
+  //   setPublicKey(pk);
+  //   setEthAddress(address);
+  // };
+
+  // const gravAddress = ethToGravity(ethAddress);
+  // const { accountData } = useQueryAccount(gravAddress);
+  // const accountNumber =
+  //   accountData?.account?.account_number ?? "Default Account Number";
+  // const sequence = accountData?.account?.sequence ?? "Default Sequence";
+
+  // const auctionId = Number(selectedAuction?.id); // Make sure this is a number
+  // const bidAmount = Number(bidAmountInput); // Convert bidAmountInput to a number
+  // const bidFee = Number(bidFeeAmount); // Convert bidFeeAmount to a number
+
+  // if (!ethAddress || !accountData) {
+  //   console.error("Ethereum address or account data is missing");
+  //   return;
+  // }
+
+  // // Call createBidTransaction and check the result before destructuring
+  // const result = createBidTransaction(
+  //   ethAddress,
+  //   auctionId,
+  //   bidAmount,
+  //   bidFee,
+  //   accountData
+  // );
+
+  // if (result) {
+  //   const { tx, context } = result;
+  //   setTransaction(tx);
+  //   setTxContext(context);
+  // } else {
+  //   console.error("Failed to create bid transaction");
+  //   // Handle the error case where transaction creation failed
+  // }
+
   return (
     <Container maxW="8xl" py={0}>
       <Head>
@@ -487,6 +565,7 @@ export default function Home() {
                   }
                 />
               </Button>
+              {/* <MetaMaskButton onPublicKeyRetrieved={handlePublicKeyRetrieved} /> */}
             </>
           )}
           {isLessThan1000px && (
