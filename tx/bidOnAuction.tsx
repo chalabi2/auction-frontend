@@ -57,10 +57,10 @@ export const bidOnAuction = (
     const { bid } = auction.v1.MessageComposer.withTypeUrl;
 
     const msg = bid({
-      auctionId: auctionId,
+      auctionId: BigInt(auctionId),
       bidder: address,
-      amount: bidAmount,
-      bidFee: bidFeeAmount,
+      amount: BigInt(bidAmount),
+      bidFee: BigInt(bidFeeAmount),
     });
 
     const memo: string = "Submitted by The Gravity Bridge Fee Auction App";
