@@ -57,8 +57,13 @@ import {
   DrawerOverlay,
   MenuIcon,
   VStack,
+  useColorModeValue,
 } from "@chakra-ui/react";
-import { BsFillMoonStarsFill, BsFillSunFill } from "react-icons/bs";
+import {
+  BsArrowDown,
+  BsFillMoonStarsFill,
+  BsFillSunFill,
+} from "react-icons/bs";
 import { MdMenu } from "react-icons/md";
 import { AiOutlineCheckCircle, AiOutlineCloseCircle } from "react-icons/ai";
 import { chainName } from "../config";
@@ -244,61 +249,87 @@ export default function Home() {
     }
   };
 
+  const headerBg = useColorModeValue("white", "gray.800");
   const renderAuctionTable = () => {
     return (
-      <TableContainer>
-        <Table variant="simple">
-          <Thead>
-            <Tr>
-              <Th>ID</Th>
-              <Th>Amount</Th>
-              {!isLessThan1000px && <Th>Highest Bid</Th>}
-              {!isLessThan1000px && <Th>Bidder</Th>}
-            </Tr>
-          </Thead>
-          <Tbody>
-            {auctionData.map((auction, index) => {
-              const denomInfo = getDenominationInfo(
-                auction.amount?.denom ?? ""
-              );
-              const formattedAmount = formatTokenAmount(
-                auction.amount?.amount || "0",
-                auction.amount?.denom || ""
-              );
-              const formatedBidAmount = formatBidAmount(
-                auction.highestBid?.bidAmount.toString() || 0
-              );
-              return (
-                <Tr
-                  key={index}
-                  _hover={{
-                    bg:
-                      colorMode === "light"
-                        ? "gray.100"
-                        : "rgba(255,255,255,0.1)",
-                    cursor: "pointer",
-                  }}
-                  onClick={() => handleRowClick(auction)}
-                >
-                  <Td>{auction.id.toString()}</Td>
-                  <Td>
-                    {formattedAmount} {denomInfo.symbol}
-                  </Td>
-                  {!isLessThan1000px && (
-                    <Td>
-                      {auction.highestBid ? formatedBidAmount : "No Bid"}{" "}
-                      {auction.highestBid ? "GRAV" : ""}{" "}
-                    </Td>
-                  )}
-                  {!isLessThan1000px && (
-                    <Td>{auction.highestBid?.bidderAddress} </Td>
-                  )}
-                </Tr>
-              );
-            })}
-          </Tbody>
-        </Table>
-      </TableContainer>
+      <>
+        <TableContainer
+          maxH="545px"
+          overflowY="scroll"
+          borderBottomRadius="20px"
+          boxShadow="0 4px 0px 0px rgba(255, 255, 255, 0.1), 0 2px 0px 0px rgba(0, 0, 0, 0.1)"
+        >
+          <Table variant="simple">
+            <Thead
+              boxShadow="0px 1px 0px 0px rgba(255,255,255,0.2)"
+              borderRadius="1px"
+              position="sticky"
+              bg={headerBg}
+              top="0"
+              zIndex="0"
+            >
+              <Tr>
+                <Th>ID</Th>
+                {!isLessThan1000px && <Th>Token</Th>}
+                <Th>Amount</Th>
+                {!isLessThan1000px && <Th>Highest Bid</Th>}
+                {!isLessThan1000px && <Th>Bidder</Th>}
+              </Tr>
+            </Thead>
+            <Tbody>
+              {auctionData.map((auction, index) => {
+                const denomInfo = getDenominationInfo(
+                  auction.amount?.denom ?? ""
+                );
+                const formattedAmount = formatTokenAmount(
+                  auction.amount?.amount || "0",
+                  auction.amount?.denom || ""
+                );
+                const formatedBidAmount = formatBidAmount(
+                  auction.highestBid?.bidAmount.toString() || 0
+                );
+
+                return (
+                  <Tr
+                    key={index}
+                    _hover={{
+                      bg:
+                        colorMode === "light"
+                          ? "gray.100"
+                          : "rgba(255,255,255,0.1)",
+                      cursor: "pointer",
+                    }}
+                    onClick={() => handleRowClick(auction)}
+                  >
+                    <Td>{auction.id.toString()}</Td>
+                    {!isLessThan1000px && (
+                      <>
+                        <Td>{denomInfo.symbol}</Td>
+                        <Td>{formattedAmount}</Td>
+                      </>
+                    )}
+                    {isLessThan1000px && (
+                      <Td>
+                        {" "}
+                        {formattedAmount} {denomInfo.symbol}
+                      </Td>
+                    )}
+                    {!isLessThan1000px && (
+                      <Td>
+                        {auction.highestBid ? formatedBidAmount : "No Bid"}{" "}
+                        {auction.highestBid ? "GRAV" : ""}{" "}
+                      </Td>
+                    )}
+                    {!isLessThan1000px && (
+                      <Td>{auction.highestBid?.bidderAddress} </Td>
+                    )}
+                  </Tr>
+                );
+              })}
+            </Tbody>
+          </Table>
+        </TableContainer>
+      </>
     );
   };
 
@@ -669,6 +700,7 @@ export default function Home() {
             </Flex>
           </Flex>
         )}
+
         <Center mt={8} mb={16}>
           {renderAuctionModal()}
           {isLoading ? (
