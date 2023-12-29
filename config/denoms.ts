@@ -70,7 +70,7 @@ export const chainDenoms: ChainDenominations = {
         symbol: 'pSTAKE',
         coinId: 'persistence',
         decimals: 18,
-        logoURI: '', // Add logo URL if available
+        logoURI: '',
         priceDenom: 'upstake'
     },
     gravity0x45804880De22913dAFE09f4980848ECE6EcbAf78: {
@@ -97,7 +97,7 @@ export const chainDenoms: ChainDenominations = {
         symbol: 'stkATOM',
         coinId: 'staked-atom',
         decimals: 6,
-        logoURI: '', // Add logo URL if available
+        logoURI: '', 
         priceDenom: 'stkatom'
     },
     gravity0x817bbDbC3e8A1204f3691d14bB44992841e3dB35: {
@@ -115,7 +115,7 @@ export const chainDenoms: ChainDenominations = {
         symbol: 'AXL',
         coinId: 'axelar',
         decimals: 6,
-        logoURI: '', // Add logo URL if available
+        logoURI: '', 
         priceDenom: 'axl'
     },
     gravity0x77E06c9eCCf2E797fd462A92B6D7642EF85b0A44: {
@@ -124,8 +124,17 @@ export const chainDenoms: ChainDenominations = {
         symbol: 'WTAO',
         coinId: 'wrapped-tao',
         decimals: 18,
-        logoURI: '', // Add logo URL if available
+        logoURI: '',
         priceDenom: 'wtao'
+    },
+    gravity0x60e683C6514Edd5F758A55b6f393BeBBAfaA8d5e: {
+      name: 'PAGE',
+      denom: 'gravity0x60e683C6514Edd5F758A55b6f393BeBBAfaA8d5e',
+      symbol: 'PAGE',
+      coinId: 'pages',
+      decimals: 8,
+      logoURI: '',
+      priceDenom: 'page'
     },
     gravity0x95aD61b0a150d79219dCF64E1E6Cc01f0B64C4cE: {
         name: 'SHIB',
