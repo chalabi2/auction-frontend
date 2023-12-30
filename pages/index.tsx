@@ -58,6 +58,7 @@ import {
   MenuIcon,
   VStack,
   useColorModeValue,
+  SlideFade,
 } from "@chakra-ui/react";
 import {
   BsArrowDown,
@@ -250,6 +251,13 @@ export default function Home() {
   };
 
   const headerBg = useColorModeValue("white", "gray.800");
+  const [isHovered, setIsHovered] = useState(false);
+
+  // Function to handle mouse enter
+  const handleMouseEnter = () => setIsHovered(true);
+
+  // Function to handle mouse leave
+  const handleMouseLeave = () => setIsHovered(false);
   const renderAuctionTable = () => {
     return (
       <>
@@ -257,6 +265,8 @@ export default function Home() {
           maxH="545px"
           overflowY="scroll"
           borderBottomRadius="20px"
+          onMouseEnter={handleMouseEnter}
+          onMouseLeave={handleMouseLeave}
           boxShadow="0 4px 0px 0px rgba(255, 255, 255, 0.1), 0 2px 0px 0px rgba(0, 0, 0, 0.1)"
         >
           <Table variant="simple">
@@ -276,6 +286,7 @@ export default function Home() {
                 {!isLessThan1000px && <Th>Bidder</Th>}
               </Tr>
             </Thead>
+
             <Tbody>
               {auctionData.map((auction, index) => {
                 const denomInfo = getDenominationInfo(
@@ -329,6 +340,24 @@ export default function Home() {
             </Tbody>
           </Table>
         </TableContainer>
+        <SlideFade in={isHovered} offsetY="-20px">
+          <Icon
+            mt="550px"
+            as={BsArrowDown}
+            color={isHovered ? "black" : "transparent"}
+            sx={{
+              position: "relative",
+              bottom: 4,
+              zIndex: 2,
+              animation: "bounce 2s infinite",
+              "@keyframes bounce": {
+                "0%, 20%, 50%, 80%, 100%": { transform: "translateY(0)" },
+                "40%": { transform: "translateY(-30px)" },
+                "60%": { transform: "translateY(-15px)" },
+              },
+            }}
+          />
+        </SlideFade>
       </>
     );
   };
