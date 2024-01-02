@@ -263,6 +263,7 @@ export default function Home() {
       <>
         <TableContainer
           maxH="545px"
+          minW={{ base: "300px", md: "1200px" }}
           overflowY="scroll"
           borderBottomRadius="20px"
           onMouseEnter={handleMouseEnter}
@@ -583,7 +584,7 @@ export default function Home() {
   // }
 
   return (
-    <Container maxW="8xl" py={0}>
+    <Container mt={"-10px"} maxW="8xl" py={0}>
       <Head>
         <title>Gravity Bridge Fee Auction</title>
         <meta name="description" content="Gravity Bridge Fee Auction App" />
