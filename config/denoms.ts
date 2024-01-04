@@ -136,6 +136,24 @@ export const chainDenoms: ChainDenominations = {
       logoURI: '',
       priceDenom: 'page'
     },
+    gravity0xA0b73E1Ff0B80914AB6fe0444E65848C4C34450b: {
+      name: 'Cronos',
+      denom: 'gravity0xA0b73E1Ff0B80914AB6fe0444E65848C4C34450b',
+      symbol: 'CRO',
+      coinId: 'crypto-com-chain',
+      decimals: 8,
+      logoURI: 'https://assets.coingecko.com/coins/images/7310/thumb/cypto.png?1547043960',
+      priceDenom: 'cro'
+    },
+    gravity0xBA11D00c5f74255f56a5E366F4F77f5A186d7f55: {
+      name: 'Band',
+      denom: 'gravity0xBA11D00c5f74255f56a5E366F4F77f5A186d7f55',
+      symbol: 'BAND',
+      coinId: 'band-protocol',
+      decimals: 18,
+      logoURI: 'https://assets.coingecko.com/coins/images/9545/thumb/band-protocol.png?1568730326',
+      priceDenom: 'band'
+    },
     gravity0x95aD61b0a150d79219dCF64E1E6Cc01f0B64C4cE: {
         name: 'SHIB',
         denom: 'gravity0x95aD61b0a150d79219dCF64E1E6Cc01f0B64C4cE',
@@ -279,6 +297,15 @@ export const chainDenoms: ChainDenominations = {
       decimals: 18,
       logoURI: '',
       priceDenom: 'acanto'
+    },
+    'ibc/00F2B62EB069321A454B708876476AFCD9C23C8C9C4A5A206DDF1CD96B645057': {
+      name: 'Mantle',
+      denom: 'ibc/00F2B62EB069321A454B708876476AFCD9C23C8C9C4A5A206DDF1CD96B645057',
+      symbol: 'MNTLE',
+      coinId: 'mantle',
+      decimals: 6,
+      logoURI: '',
+      priceDenom: 'umntle'
     },
     'ibc/E05A4DAEA5681A09067DC213F32464639D18007215C87964EC45FF876B5EE82B': {
         name: 'Archway',
