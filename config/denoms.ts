@@ -91,6 +91,15 @@ export const chainDenoms: ChainDenominations = {
         logoURI: 'https://assets.coingecko.com/coins/images/21092/thumb/umee.png?1638316975',
         priceDenom: 'umee'
     },
+    gravity0x2B89bF8ba858cd2FCee1faDa378D5cd6936968Be: {
+      name: 'WSCRT',
+      denom: 'gravity0x2B89bF8ba858cd2FCee1faDa378D5cd6936968Be',
+      symbol: 'WSCRT',
+      coinId: 'secret',
+      decimals: 6,
+      logoURI: 'https://assets.coingecko.com/coins/images/11038/thumb/Secret.png?1587715047',
+      priceDenom: 'wscrt'
+    },
     gravity0x44017598f2AF1bD733F9D87b5017b4E7c1B28DDE: {
         name: 'stkATOM',
         denom: 'gravity0x44017598f2AF1bD733F9D87b5017b4E7c1B28DDE',
@@ -315,6 +324,15 @@ export const chainDenoms: ChainDenominations = {
         decimals: 18,
         logoURI: '',
         priceDenom: 'aarch'
+    },
+    'ibc/0EB6D5E44D1587D12E222C1155181884098202F56263795259C53536D07C2E65': {
+      name: 'Meme',
+      denom: 'ibc/0EB6D5E44D1587D12E222C1155181884098202F56263795259C53536D07C2E65',
+      symbol: 'MEME',
+      coinId: 'memetic',
+      decimals: 6,
+      logoURI: '',
+      priceDenom: 'umeme'
     },
     'ibc/D157AD8A50DAB0FC4EB95BBE1D9407A590FA2CDEE04C90A76C005089BF76E519': {
       name: 'Unification',
