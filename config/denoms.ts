@@ -235,6 +235,24 @@ export const chainDenoms: ChainDenominations = {
       logoURI: '',
       priceDenom: 'wsteth'
     },
+    gravity0xF411903cbC70a74d22900a5DE66A2dda66507255: {
+      name: 'Vera',
+      denom: 'gravity0xF411903cbC70a74d22900a5DE66A2dda66507255',
+      symbol: 'VERA',
+      coinId: 'vera',
+      decimals: 18,
+      logoURI: '',
+      priceDenom: 'vera'
+    },
+    'ibc/97275C664907DF6ADEA732934510F64D0B4EB89886E4DC912AA27A24025E78CD': {
+      name: 'Neutaro',
+      denom: 'ibc/97275C664907DF6ADEA732934510F64D0B4EB89886E4DC912AA27A24025E78CD',
+      symbol: 'NEUTARO',
+      coinId: 'neautaro',
+      decimals: 6,
+      logoURI: '',
+      priceDenom: 'neautaro'
+    },
     'ibc/6BEE6DBC35E5CCB3C8ADA943CF446735E6A3D48B174FEE027FAB3410EDE6319C': {
         name: 'Kujira',
         denom: 'ibc/6BEE6DBC35E5CCB3C8ADA943CF446735E6A3D48B174FEE027FAB3410EDE6319C',
