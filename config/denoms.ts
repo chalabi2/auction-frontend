@@ -244,6 +244,15 @@ export const chainDenoms: ChainDenominations = {
       logoURI: '',
       priceDenom: 'vera'
     },
+    gravity0x4123a133ae3c521FD134D7b13A2dEC35b56c2463: {
+      name: 'Qredo',
+      denom: 'gravity0x4123a133ae3c521FD134D7b13A2dEC35b56c2463',
+      symbol: 'QRDO',
+      coinId: 'qrdo',
+      decimals: 8,
+      logoURI: '',
+      priceDenom: 'qrdo'
+    },
     'ibc/97275C664907DF6ADEA732934510F64D0B4EB89886E4DC912AA27A24025E78CD': {
       name: 'Neutaro',
       denom: 'ibc/97275C664907DF6ADEA732934510F64D0B4EB89886E4DC912AA27A24025E78CD',
