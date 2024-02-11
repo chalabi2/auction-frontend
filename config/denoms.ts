@@ -369,7 +369,16 @@ export const chainDenoms: ChainDenominations = {
       decimals: 9,
       logoURI: '',
       priceDenom: 'nund'
-    }
+    },
+    "ibc/AD355DD10DF3C25CD42B5812F34077A1235DF343ED49A633B4E76AE98F3B78BC": {
+      name: 'USK',
+      denom: 'ibc/AD355DD10DF3C25CD42B5812F34077A1235DF343ED49A633B4E76AE98F3B78BC',
+      symbol: 'USK',
+      coinId: 'usk',
+      decimals: 6,
+      logoURI: '',
+      priceDenom: 'usk'
+    },
   };
   
   interface Denomination {
