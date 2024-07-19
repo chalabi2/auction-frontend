@@ -253,6 +253,24 @@ export const chainDenoms: ChainDenominations = {
       logoURI: '',
       priceDenom: 'qrdo'
     },
+    gravity0xAa6E8127831c9DE45ae56bB1b0d4D4Da6e5665BD: {
+      name: 'ETH 2x Flexible Leverage Index',
+      denom: 'gravity0xAa6E8127831c9DE45ae56bB1b0d4D4Da6e5665BD',
+      symbol: 'ETH2x-FLI',
+      coinId: 'ETH2x-FLI',
+      decimals: 18,
+      logoURI: '',
+      priceDenom: 'ETH2x-FLI'
+    },
+    'ibc/3DA3455A6E8EBE1C7EF5C83FDED825B94C13A9303A7FA54C098F13A091B00CE1': {
+      name: 'AQLA Token',
+      denom: '3DA3455A6E8EBE1C7EF5C83FDED825B94C13A9303A7FA54C098F13A091B00CE1',
+      symbol: 'AQLA',
+      coinId: 'aqla',
+      decimals: 6,
+      logoURI: '',
+      priceDenom: 'aqla'
+    },
     'ibc/97275C664907DF6ADEA732934510F64D0B4EB89886E4DC912AA27A24025E78CD': {
       name: 'Neutaro',
       denom: 'ibc/97275C664907DF6ADEA732934510F64D0B4EB89886E4DC912AA27A24025E78CD',
