@@ -262,6 +262,15 @@ export const chainDenoms: ChainDenominations = {
       logoURI: '',
       priceDenom: 'ETH2x-FLI'
     },
+    gravity0xd3d2E2692501A5c9Ca623199D38826e513033a17: {
+      name: 'Uniswap V2',
+      denom: 'gravity0xd3d2E2692501A5c9Ca623199D38826e513033a17',
+      symbol: 'UNI-V2',
+      coinId: 'uni-v2',
+      decimals: 18,
+      logoURI: '',
+      priceDenom: 'uni-v2'
+    },
     'ibc/3DA3455A6E8EBE1C7EF5C83FDED825B94C13A9303A7FA54C098F13A091B00CE1': {
       name: 'AQLA Token',
       denom: '3DA3455A6E8EBE1C7EF5C83FDED825B94C13A9303A7FA54C098F13A091B00CE1',

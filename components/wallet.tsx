@@ -44,13 +44,6 @@ export const WalletSection = () => {
     logoUrl,
   } = useChain(chainName);
 
-  const chain = {
-    chainName,
-    label: chainInfo.pretty_name,
-    value: chainName,
-    icon: logoUrl,
-  };
-
   // Events
   const onClickConnect: MouseEventHandler = async (e) => {
     e.preventDefault();
@@ -83,37 +76,9 @@ export const WalletSection = () => {
     />
   );
 
-  const connectWalletWarn = (
-    <ConnectStatusWarn
-      walletStatus={status}
-      rejected={
-        <RejectedWarn
-          icon={<Icon as={FiAlertTriangle} mt={1} />}
-          wordOfWarning={`${wallet?.prettyName}: ${message}`}
-        />
-      }
-      error={
-        <RejectedWarn
-          icon={<Icon as={FiAlertTriangle} mt={1} />}
-          wordOfWarning={`${wallet?.prettyName}: ${message}`}
-        />
-      }
-    />
-  );
-
-  const userInfo = username && (
-    <ConnectedUserInfo username={username} icon={<Astronaut />} />
-  );
-  const addressBtn = (
-    <CopyAddressBtn
-      walletStatus={status}
-      connected={<ConnectedShowAddress address={address} isLoading={false} />}
-    />
-  );
-
   return (
     <Center py={16}>
-      <Box zIndex={10} maxWidth={"100px"}>
+      <Box zIndex={1000} maxWidth={"100px"}>
         {connectWalletButton}
       </Box>
     </Center>

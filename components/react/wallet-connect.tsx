@@ -13,26 +13,7 @@ export const ConnectWalletButton = ({
   onClickConnectBtn,
 }: ConnectWalletType) => {
   return (
-    <Button
-      w="full"
-      minW={{ base: "300px", md: "fit-content" }}
-      size="lg"
-      isLoading={isLoading}
-      isDisabled={isDisabled}
-      bgImage="linear-gradient(109.6deg, blue 11.2%, darkblue 83.1%)"
-      color="white"
-      opacity={1}
-      transition="all .5s ease-in-out"
-      _hover={{
-        bgImage: "linear-gradient(109.6deg, blue 11.2%, darkblue 83.1%)",
-        opacity: 0.75,
-      }}
-      _active={{
-        bgImage: "blue",
-        opacity: 0.9,
-      }}
-      onClick={onClickConnectBtn}
-    >
+    <Button onClick={onClickConnectBtn}>
       <Icon as={icon ? icon : IoWallet} mr={2} />
       {buttonText ? buttonText : "Connect"}
     </Button>

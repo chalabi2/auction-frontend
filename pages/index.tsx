@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/rules-of-hooks */
 import { useEffect, useState } from "react";
 import Head from "next/head";
 import { useChain } from "@cosmos-kit/react";
@@ -6,7 +7,6 @@ import { auction } from "@chalabi/gravity-bridgejs/dist/codegen";
 import { Auction } from "@chalabi/gravity-bridgejs/dist/codegen/auction/v1/auction";
 import { getDenominationInfo, formatTokenAmount } from "../config/denoms";
 import { FaSyncAlt } from "react-icons/fa";
-import { bidOnAuction } from "../tx/bidOnAuction";
 
 import {
   Heading,
@@ -59,38 +59,36 @@ import {
   VStack,
   useColorModeValue,
   SlideFade,
+  HStack,
 } from "@chakra-ui/react";
 import {
   BsArrowDown,
   BsFillMoonStarsFill,
   BsFillSunFill,
 } from "react-icons/bs";
-import { MdMenu } from "react-icons/md";
+
 import { AiOutlineCheckCircle, AiOutlineCloseCircle } from "react-icons/ai";
 import { chainName } from "../config";
-import { WalletSection, handleChangeColorModeValue } from "../components";
+import { WalletSection } from "../components";
 
 import { BsFillInfoCircleFill } from "react-icons/bs";
 
 import { formatBidAmount, formatTotalBidCost } from "../utils/utils";
-import { DrawerControlProvider } from "../components/react/useDrawerControl";
-import getCompressedPublicKeyAndEthAddress from "../tx/metaMaskAccount";
-import { ethToGravity } from "@gravity-bridge/address-converter";
-import { createBidTransaction } from "../tx/eipSigning";
-import { useQueryAccount } from "../utils/queryAccount";
-import { TxContext } from "@gravity-bridge/transactions";
-import { TxPayload } from "@gravity-bridge/transactions/dist/messages/common";
+
+import { useTx } from "../hooks/useTx";
+import { useFeeEstimation } from "../hooks/useFeeEstimation";
 
 const gravitybridge = { auction };
 const createRPCQueryClient =
   gravitybridge.auction.ClientFactory.createRPCQueryClient;
 
 export default function Home() {
+  const { tx } = useTx("gravitybridge");
+
   const { colorMode, toggleColorMode } = useColorMode();
 
   const [isLessThan1000px] = useMediaQuery("(max-width: 1000px)");
-  const { getSigningStargateClient, address, status, getRpcEndpoint } =
-    useChain(chainName);
+  const { address } = useChain(chainName);
 
   const [auctionData, setAuctionData] = useState<Auction[]>([]);
 
@@ -109,6 +107,7 @@ export default function Home() {
     const clientAuction = await createRPCQueryClient({
       rpcEndpoint: "https://nodes.chandrastation.com/rpc/gravity/",
     });
+
     const currentHeightResponse =
       await clientAuction.cosmos.base.tendermint.v1beta1.getLatestBlock();
     return currentHeightResponse?.block?.header?.height || 0;
@@ -130,19 +129,16 @@ export default function Home() {
     const remainingBlocks = Number(endBlockHeight) - Number(currentBlockHeight);
     const totalSeconds = remainingBlocks * 6; // Assuming each block takes an average of 6 seconds
 
-    // Calculate hours, minutes, and seconds
     const hours = Math.floor(totalSeconds / 3600);
     const minutes = Math.floor((totalSeconds % 3600) / 60);
-    const seconds = totalSeconds % 60;
 
-    // Format the time
     const formattedTime = `~${hours}h ${minutes}m`;
 
     setAuctionTimer({ remainingBlocks, remainingTime: formattedTime });
   };
 
   useEffect(() => {
-    fetchAuctionTimer(); // Call this function on component mount or when needed
+    fetchAuctionTimer();
   }, []);
 
   const fetchAuctions = async () => {
@@ -151,7 +147,6 @@ export default function Home() {
     });
     setIsLoading(true);
     try {
-      // Fetch auctions
       const response = await clientAuction.auction.v1.auctions();
 
       if (response && response.auctions) {
@@ -161,75 +156,68 @@ export default function Home() {
       console.error("Failed to fetch auctions:", error);
     }
     setIsLoading(false);
-    setTimer(30); // Reset timer
+    setTimer(30);
     fetchAuctionTimer();
   };
 
   useEffect(() => {
-    fetchAuctions(); // Fetch on render
+    fetchAuctions();
 
     const interval = setInterval(() => {
-      fetchAuctions(); // Refetch every 30 seconds
+      fetchAuctions();
     }, 30000);
 
-    return () => clearInterval(interval); // Clear interval on unmount
+    return () => clearInterval(interval);
   }, []);
   useEffect(() => {
     const countdown = setInterval(() => {
-      setTimer((prev) => (prev > 0 ? prev - 1 : 30));
+      setTimer((prev: number) => (prev > 0 ? prev - 1 : 30));
     }, 1000);
 
-    return () => clearInterval(countdown); // Clear countdown on unmount
+    return () => clearInterval(countdown);
   }, []);
 
   const [selectedAuction, setSelectedAuction] = useState<Auction | null>(null);
-  const {
-    isOpen: DrawerIsOpen,
-    onOpen: DrawerOnOpen,
-    onClose: DrawerOnClose,
-  } = useDisclosure();
 
   const handleRowClick = (auction: Auction) => {
     setSelectedAuction(auction);
     onOpen();
   };
 
-  const [response, setResponse] = useState("");
-
   const [isSigning, setIsSigning] = useState(false);
   const [isSigned, setIsSigned] = useState(false);
   const [isError, setIsError] = useState(false);
 
-  const toast = useToast();
+  const { bid } = auction.v1.MessageComposer.withTypeUrl;
 
-  const handleBidClick =
-    (auctionId: string, bidAmount: string, bidFeeAmount: string) =>
-    async (event: {
-      preventDefault: () => void;
-      stopPropagation: () => void;
-    }) => {
-      event.preventDefault();
-      event.stopPropagation();
-      setIsSigning(true);
-      setIsError(false);
-      try {
-        await bidOnAuction(
-          getSigningStargateClient,
-          setResponse,
-          address ?? "",
-          auctionId,
-          bidAmount,
-          bidFeeAmount,
-          toast
-        )();
-        setIsSigning(false);
-        setIsSigned(false);
-      } catch (error) {
-        setIsSigning(false);
-        setIsError(true);
-        console.error(error);
-      }
-    };
+  const { estimateFee } = useFeeEstimation("gravitybridge" ?? "");
+
+  const handleBidClick = async () => {
+    setIsSigning(true);
+    const msg = bid({
+      bidder: address ?? "",
+      auctionId: selectedAuction?.id ?? BigInt(0),
+      amount: BigInt(bidAmountInput),
+      bidFee: auctionFeePrice ?? BigInt(0),
+    });
+
+    const fee = await estimateFee(address ?? "", [msg]);
+    try {
+      await tx([msg], {
+        fee,
+        onSuccess: () => {
+          setIsSigning(false);
+          setIsSigned(true);
+        },
+      });
+    } catch (error) {
+      setIsSigning(false);
+      setIsError(true);
+      console.error("Transaction Error:", error);
+    } finally {
+      setIsSigning(false);
+    }
+  };
 
   const [bidAmountInput, setBidAmountInput] = useState("0");
 
@@ -248,119 +236,6 @@ export default function Home() {
       // Update the state with the converted number
       setBidAmountInput(convertedNumber);
     }
-  };
-
-  const headerBg = useColorModeValue("white", "gray.800");
-  const [isHovered, setIsHovered] = useState(false);
-
-  // Function to handle mouse enter
-  const handleMouseEnter = () => setIsHovered(true);
-
-  // Function to handle mouse leave
-  const handleMouseLeave = () => setIsHovered(false);
-  const renderAuctionTable = () => {
-    return (
-      <>
-        <TableContainer
-          maxH="545px"
-          minW={{ base: "300px", md: "1200px" }}
-          overflowY="scroll"
-          borderBottomRadius="20px"
-          onMouseEnter={handleMouseEnter}
-          onMouseLeave={handleMouseLeave}
-          boxShadow="0 4px 0px 0px rgba(255, 255, 255, 0.1), 0 2px 0px 0px rgba(0, 0, 0, 0.1)"
-        >
-          <Table variant="simple">
-            <Thead
-              boxShadow="0px 1px 0px 0px rgba(255,255,255,0.2)"
-              borderRadius="1px"
-              position="sticky"
-              bg={headerBg}
-              top="0"
-              zIndex="0"
-            >
-              <Tr>
-                <Th>ID</Th>
-                {!isLessThan1000px && <Th>Token</Th>}
-                <Th>Amount</Th>
-                {!isLessThan1000px && <Th>Highest Bid</Th>}
-                {!isLessThan1000px && <Th>Bidder</Th>}
-              </Tr>
-            </Thead>
-
-            <Tbody>
-              {auctionData.map((auction, index) => {
-                const denomInfo = getDenominationInfo(
-                  auction.amount?.denom ?? ""
-                );
-                const formattedAmount = formatTokenAmount(
-                  auction.amount?.amount || "0",
-                  auction.amount?.denom || ""
-                );
-                const formatedBidAmount = formatBidAmount(
-                  auction.highestBid?.bidAmount.toString() || 0
-                );
-
-                return (
-                  <Tr
-                    key={index}
-                    _hover={{
-                      bg:
-                        colorMode === "light"
-                          ? "gray.100"
-                          : "rgba(255,255,255,0.1)",
-                      cursor: "pointer",
-                    }}
-                    onClick={() => handleRowClick(auction)}
-                  >
-                    <Td>{auction.id.toString()}</Td>
-                    {!isLessThan1000px && (
-                      <>
-                        <Td>{denomInfo.symbol}</Td>
-                        <Td>{formattedAmount}</Td>
-                      </>
-                    )}
-                    {isLessThan1000px && (
-                      <Td>
-                        {" "}
-                        {formattedAmount} {denomInfo.symbol}
-                      </Td>
-                    )}
-                    {!isLessThan1000px && (
-                      <Td>
-                        {auction.highestBid ? formatedBidAmount : "No Bid"}{" "}
-                        {auction.highestBid ? "GRAV" : ""}{" "}
-                      </Td>
-                    )}
-                    {!isLessThan1000px && (
-                      <Td>{auction.highestBid?.bidderAddress} </Td>
-                    )}
-                  </Tr>
-                );
-              })}
-            </Tbody>
-          </Table>
-        </TableContainer>
-        <SlideFade in={isHovered} offsetY="-20px">
-          <Icon
-            mt="550px"
-            as={BsArrowDown}
-            color={isHovered ? "black" : "transparent"}
-            sx={{
-              position: "relative",
-              bottom: 4,
-              zIndex: 2,
-              animation: "bounce 2s infinite",
-              "@keyframes bounce": {
-                "0%, 20%, 50%, 80%, 100%": { transform: "translateY(0)" },
-                "40%": { transform: "translateY(-30px)" },
-                "60%": { transform: "translateY(-15px)" },
-              },
-            }}
-          />
-        </SlideFade>
-      </>
-    );
   };
 
   const bidFeeAmount = `${auctionFeePrice.toString()}`;
@@ -473,11 +348,7 @@ export default function Home() {
             <Tooltip label={disabledTooltipMessage}>
               <Button
                 isDisabled={!address || bidAmountInput === "0"}
-                onClick={handleBidClick(
-                  selectedAuction?.id.toString() ?? "",
-                  bidAmountInput,
-                  bidFeeAmount.toString()
-                )}
+                onClick={handleBidClick}
                 colorScheme="blue"
                 mb={6}
               >
@@ -511,248 +382,160 @@ export default function Home() {
 
   const { isOpen, onOpen, onClose } = useDisclosure();
 
-  // type PublicKeyRetrievedHandler = (
-  //   publicKey: string,
-  //   ethAddress: string
-  // ) => void;
-
-  // interface MetaMaskButtonProps {
-  //   onPublicKeyRetrieved: PublicKeyRetrievedHandler;
-  // }
-
-  // const MetaMaskButton: React.FC<MetaMaskButtonProps> = ({
-  //   onPublicKeyRetrieved,
-  // }) => {
-  //   const handleButtonClick = async () => {
-  //     try {
-  //       const { compressedPublicKey, ethAddress } =
-  //         await getCompressedPublicKeyAndEthAddress();
-  //       // Call the callback function with the public key and address
-  //       onPublicKeyRetrieved(compressedPublicKey, ethAddress);
-  //     } catch (error: any) {
-  //       console.error("Error:", error.message);
-  //     }
-  //   };
-
-  //   return <Button onClick={handleButtonClick}>MetaMask</Button>;
-  // };
-
-  // const [transaction, setTransaction] = useState<TxPayload | null>(null);
-  // console.log(transaction);
-  // const [txContext, setTxContext] = useState<TxContext | null>(null);
-  // console.log(txContext);
-
-  // const [publicKey, setPublicKey] = useState("");
-  // const [ethAddress, setEthAddress] = useState("");
-
-  // const handlePublicKeyRetrieved: PublicKeyRetrievedHandler = (pk, address) => {
-  //   setPublicKey(pk);
-  //   setEthAddress(address);
-  // };
-
-  // const gravAddress = ethToGravity(ethAddress);
-  // const { accountData } = useQueryAccount(gravAddress);
-  // const accountNumber =
-  //   accountData?.account?.account_number ?? "Default Account Number";
-  // const sequence = accountData?.account?.sequence ?? "Default Sequence";
-
-  // const auctionId = Number(selectedAuction?.id); // Make sure this is a number
-  // const bidAmount = Number(bidAmountInput); // Convert bidAmountInput to a number
-  // const bidFee = Number(bidFeeAmount); // Convert bidFeeAmount to a number
-
-  // if (!ethAddress || !accountData) {
-  //   console.error("Ethereum address or account data is missing");
-  //   return;
-  // }
-
-  // // Call createBidTransaction and check the result before destructuring
-  // const result = createBidTransaction(
-  //   ethAddress,
-  //   auctionId,
-  //   bidAmount,
-  //   bidFee,
-  //   accountData
-  // );
-
-  // if (result) {
-  //   const { tx, context } = result;
-  //   setTransaction(tx);
-  //   setTxContext(context);
-  // } else {
-  //   console.error("Failed to create bid transaction");
-  //   // Handle the error case where transaction creation failed
-  // }
+  const hoverColor = useColorModeValue("gray.100", "gray.700");
 
   return (
-    <Container mt={"-10px"} maxW="8xl" py={0}>
+    <Container maxW="container.xl" py={8}>
       <Head>
         <title>Gravity Bridge Fee Auction</title>
         <meta name="description" content="Gravity Bridge Fee Auction App" />
         <link rel="icon" href="/favicon.ico" />
       </Head>
+      {!isLessThan1000px ? (
+        <>
+          <Flex justify="space-between" align="center">
+            <Flex justify="space-between" align="center" flexDir="row" gap={2}>
+              <Image
+                height="60px"
+                src={useColorModeValue("logolight.svg", "logodark.svg")}
+                alt="Gravity Bridge Logo"
+              />
+              <Heading as="h1" size="xl" fontWeight="hairline" lineHeight="10">
+                Fee Auction
+              </Heading>
+            </Flex>
 
-      <Flex justifyContent="space-between" alignItems="center" mb={4}>
-        <Image
-          mt={{ base: "30px", md: "10px" }}
-          height={{ base: "30px", md: "60px" }}
-          src={handleChangeColorModeValue(
-            colorMode,
-            "logolight.svg",
-            "logodark.svg"
-          )}
-          alt="Gravity Bridge Logo"
-        />
-        <Flex
-          alignItems="center"
-          justifyContent="space-between"
-          mr={"100px"}
-          mt={"-10px"}
-        >
-          {!isLessThan1000px && (
-            <>
-              <Flex
-                alignItems={"center"}
-                gap={16}
-                flexDir={"row"}
-                paddingX={"90px"}
-              >
-                <WalletSection />
-              </Flex>
-
-              <Button variant="outline" p={0} onClick={toggleColorMode}>
+            <HStack spacing={4}>
+              <Button onClick={toggleColorMode}>
                 <Icon
-                  as={
-                    colorMode === "light" ? BsFillMoonStarsFill : BsFillSunFill
-                  }
+                  as={useColorModeValue(BsFillMoonStarsFill, BsFillSunFill)}
                 />
               </Button>
-              {/* <MetaMaskButton onPublicKeyRetrieved={handlePublicKeyRetrieved} /> */}
-            </>
-          )}
-          {isLessThan1000px && (
-            <DrawerControlProvider closeDrawer={DrawerOnClose}>
-              <>
-                <Button top={"20px"} left={"60px"} onClick={DrawerOnOpen}>
-                  <Icon name="menu" as={MdMenu} />
-                </Button>
+              <WalletSection />
+            </HStack>
+          </Flex>
 
-                <Drawer
-                  isOpen={DrawerIsOpen}
-                  placement="left"
-                  onClose={DrawerOnClose}
-                >
-                  <DrawerOverlay zIndex={0} />
-                  <DrawerContent zIndex={0}>
-                    <DrawerHeader borderBottomWidth="1px">
-                      <Image
-                        height="40px"
-                        src={handleChangeColorModeValue(
-                          colorMode,
-                          "logolight.svg",
-                          "logodark.svg"
-                        )}
-                        alt="Gravity Bridge Logo"
-                      />
-                    </DrawerHeader>
-                    <DrawerBody zIndex={0}>
-                      <Flex
-                        gap={-6}
-                        flexDir={"column"}
-                        justifyContent="space-between"
-                        alignItems={"left"}
-                      >
-                        <Button
-                          mt="40px"
-                          variant="outline"
-                          p={0}
-                          onClick={toggleColorMode}
-                        >
-                          <Icon
-                            as={
-                              colorMode === "light"
-                                ? BsFillMoonStarsFill
-                                : BsFillSunFill
-                            }
-                          />
-                        </Button>
-                        <Box mr={"200px"}>
-                          <WalletSection />
-                        </Box>
-                      </Flex>
-                    </DrawerBody>
-                  </DrawerContent>
-                </Drawer>
-              </>
-            </DrawerControlProvider>
-          )}
-        </Flex>
-      </Flex>
-      <Container maxW="5xl" py={4}>
-        {!isLessThan1000px && (
-          <Flex justifyContent="space-between" alignItems="center">
-            <Heading as="h2" size="lg" fontWeight={"light"} letterSpacing="4">
-              Fee Auction
+          {/* Auction Timer and Information Section */}
+          <Flex
+            flexDir={"row"}
+            justifyContent={"space-between"}
+            align="center"
+            p={4}
+            mb={1}
+          >
+            <Heading as="h3" size="md">
+              Auction Information
             </Heading>
-            <Text fontWeight={"light"}>
-              Time Remaining: {auctionTimer.remainingTime}
-            </Text>
-            <Text fontWeight={"light"}>
-              Blocks Remaining: {auctionTimer.remainingBlocks}
-            </Text>
-            <Flex alignItems="center">
-              <Tooltip label="Auction refetch timer" aria-label="A tooltip">
-                <CircularProgress value={(timer / 30) * 100} color="blue.400">
+            <Flex flexDirection={"row"} justify={"space-between"} gap={4}>
+              <Text fontSize="sm">
+                Time Remaining: <strong>{auctionTimer.remainingTime}</strong>
+              </Text>
+
+              <Text fontSize="sm">
+                Blocks Remaining:{" "}
+                <strong>{auctionTimer.remainingBlocks}</strong>
+              </Text>
+            </Flex>
+
+            <Flex align="center">
+              <Tooltip label="Auction refetch timer">
+                <CircularProgress
+                  value={(timer / 30) * 100}
+                  color="blue.400"
+                  size="35px"
+                >
                   <CircularProgressLabel>{timer}</CircularProgressLabel>
                 </CircularProgress>
               </Tooltip>
-              <Button onClick={fetchAuctions} bgColor="transparent" ml={3}>
+              <Button
+                size="55px"
+                onClick={fetchAuctions}
+                variant="ghost"
+                ml={4}
+              >
                 <Icon as={FaSyncAlt} />
               </Button>
             </Flex>
           </Flex>
-        )}
-        {isLessThan1000px && (
-          <Flex mt={"30px"} justifyContent="space-between" alignItems="center">
-            <VStack alignItems={"left"}>
-              <Heading as="h2" size="lg" fontWeight={"light"} letterSpacing="4">
-                Fee Auction
-              </Heading>
-              <Text fontWeight={"light"}>
-                Time Remaining: {auctionTimer.remainingTime}
-              </Text>
-            </VStack>
-            <Flex alignItems="center">
-              <Tooltip label="Auction refetch timer" aria-label="A tooltip">
-                <CircularProgress value={(timer / 30) * 100} color="blue.400">
-                  <CircularProgressLabel>{timer}</CircularProgressLabel>
-                </CircularProgress>
-              </Tooltip>
-            </Flex>
-          </Flex>
-        )}
 
-        <Center mt={8} mb={16}>
+          {/* Auction Table */}
+          <Box
+            borderWidth={1}
+            borderColor={useColorModeValue("gray.200", "gray.700")}
+            borderRadius="lg"
+            overflow="hidden"
+            boxShadow="lg"
+          >
+            <TableContainer maxH="545px" overflowY="auto">
+              <Table variant="simple">
+                <Thead
+                  position="sticky"
+                  top={0}
+                  zIndex={1}
+                  bg={useColorModeValue("gray.50", "gray.700")}
+                >
+                  <Tr>
+                    <Th>ID</Th>
+                    <Th>Token</Th>
+                    <Th>Amount</Th>
+                    <Th>Highest Bid</Th>
+                    <Th>Bidder</Th>
+                  </Tr>
+                </Thead>
+                <Tbody>
+                  {auctionData.map((auction, index) => (
+                    <Tr
+                      key={index}
+                      onClick={() => handleRowClick(auction)}
+                      _hover={{
+                        bg: hoverColor,
+                        cursor: "pointer",
+                      }}
+                    >
+                      <Td>{auction.id.toString()}</Td>
+                      <Td>
+                        {getDenominationInfo(auction.amount?.denom).symbol}
+                      </Td>
+                      <Td>
+                        {formatTokenAmount(
+                          auction.amount?.amount,
+                          auction.amount?.denom
+                        )}
+                      </Td>
+                      <Td>
+                        {auction.highestBid
+                          ? `${formatBidAmount(
+                              auction.highestBid.bidAmount.toString()
+                            )} GRAV`
+                          : "No Bid"}
+                      </Td>
+                      <Td>{auction.highestBid?.bidderAddress || "N/A"}</Td>
+                    </Tr>
+                  ))}
+                </Tbody>
+              </Table>
+            </TableContainer>
+          </Box>
+
           {renderAuctionModal()}
-          {isLoading ? (
-            <Skeleton mt="4" noOfLines={12}>
-              <SkeletonText spacing={12} />
-            </Skeleton>
-          ) : (
-            auctionData.length > 0 && renderAuctionTable()
-          )}
-        </Center>
-        <Center mt={"-30px"}>
-          <Text fontSize="sm" color="gray.500">
-            Built by{" "}
-            <Link href="https://chandrastation.com">Chandra Station</Link>
+          <Box as="footer" mt={4} textAlign="center" py={4}>
+            <Text fontSize="sm" color="gray.500">
+              Built by{" "}
+              <Link href="https://chandrastation.com">Chandra Station</Link>
+            </Text>
+            <Text fontSize="xs" color="gray.500">
+              Alpha v0.2.0
+            </Text>
+          </Box>
+        </>
+      ) : (
+        <Box background={"rgba(0,0,0,0.1)"} padding={4} borderRadius="md">
+          <Text>
+            This app is not optimized for mobile devices. Please switch to a
+            desktop or laptop.
           </Text>
-        </Center>
-        <Center>
-          <Text fontSize="xs" fontWeight={"light"} color="gray.500">
-            Alpha v0.0.1
-          </Text>
-        </Center>
-      </Container>
+        </Box>
+      )}
     </Container>
   );
 }

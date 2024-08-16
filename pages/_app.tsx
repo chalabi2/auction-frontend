@@ -4,13 +4,11 @@ import type { AppProps } from "next/app";
 import { ChainProvider } from "@cosmos-kit/react";
 import { ChakraProvider } from "@chakra-ui/react";
 import { defaultTheme } from "../config";
-import { wallets as keplrWallets } from "@cosmos-kit/keplr";
-import { wallets as cosmostationWallets } from "@cosmos-kit/cosmostation";
-import { wallets as leapWallets } from "@cosmos-kit/leap";
+import { wallets } from "cosmos-kit";
 
-import { assets, chains } from "chain-registry";
+import { assets, chain } from "chain-registry/mainnet/gravitybridge";
 
-import { MainWalletBase, SignerOptions } from "@cosmos-kit/core";
+import { SignerOptions } from "@cosmos-kit/core";
 import { Chain } from "@chain-registry/types";
 import "@interchain-ui/react/styles";
 
@@ -25,12 +23,13 @@ function CreateCosmosApp({ Component, pageProps }: AppProps) {
   const signerOptions: SignerOptions = {
     //@ts-ignore
     signingStargate: (
-      chain: Chain
+      _chain: Chain
     ): SigningStargateClientOptions | undefined => {
       const registry = new Registry(auctionProtoRegistry);
       const aminoTypes = new AminoTypes(auctionAminoConverters);
       return {
         aminoTypes: aminoTypes,
+        // @ts-ignore
         registry: registry,
       };
     },
@@ -47,15 +46,10 @@ function CreateCosmosApp({ Component, pageProps }: AppProps) {
             },
           },
         }}
-        chains={chains}
-        assetLists={assets}
-        wallets={
-          [
-            ...keplrWallets,
-            ...cosmostationWallets,
-            ...leapWallets,
-          ] as unknown as MainWalletBase[]
-        }
+        chains={[chain]}
+        logLevel="NONE"
+        assetLists={[assets]}
+        wallets={wallets as any}
         walletConnectOptions={{
           signClient: {
             projectId: "a8510432ebb71e6948cfd6cde54b70f7",
@@ -68,8 +62,10 @@ function CreateCosmosApp({ Component, pageProps }: AppProps) {
             },
           },
         }}
+        // @ts-ignore
         signerOptions={signerOptions}
       >
+        {/* @ts-ignore */}
         <Component {...pageProps} />
       </ChainProvider>
     </ChakraProvider>
