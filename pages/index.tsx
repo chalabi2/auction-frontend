@@ -35,14 +35,11 @@ import {
   ModalHeader,
   ModalOverlay,
   Tooltip,
-  SkeletonText,
-  Skeleton,
   Box,
   Input,
   StatNumber,
   Stat,
   StatLabel,
-  useToast,
   Alert,
   AlertDescription,
   AlertIcon,
@@ -50,22 +47,10 @@ import {
   Spinner,
   Link,
   useMediaQuery,
-  Drawer,
-  DrawerBody,
-  DrawerContent,
-  DrawerHeader,
-  DrawerOverlay,
-  MenuIcon,
-  VStack,
   useColorModeValue,
-  SlideFade,
   HStack,
 } from "@chakra-ui/react";
-import {
-  BsArrowDown,
-  BsFillMoonStarsFill,
-  BsFillSunFill,
-} from "react-icons/bs";
+import { BsFillMoonStarsFill, BsFillSunFill } from "react-icons/bs";
 
 import { AiOutlineCheckCircle, AiOutlineCloseCircle } from "react-icons/ai";
 import { chainName } from "../config";
