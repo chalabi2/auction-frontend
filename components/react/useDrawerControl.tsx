@@ -1,24 +1,25 @@
 import { createContext, ReactNode, useContext } from "react";
 
-// Create a context
 const DrawerControlContext = createContext({
   closeDrawer: () => {},
+  onDrawerClose: () => {},
 });
 
-// Hook to use the context
 export const useDrawerControl = () => useContext(DrawerControlContext);
 
 interface DrawerControlProviderProps {
   children: ReactNode;
   closeDrawer: () => void;
+  onDrawerClose: () => void;
 }
 
 export const DrawerControlProvider = ({
   children,
   closeDrawer,
+  onDrawerClose,
 }: DrawerControlProviderProps) => {
   return (
-    <DrawerControlContext.Provider value={{ closeDrawer }}>
+    <DrawerControlContext.Provider value={{ closeDrawer, onDrawerClose }}>
       {children}
     </DrawerControlContext.Provider>
   );

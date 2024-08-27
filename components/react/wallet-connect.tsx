@@ -1,5 +1,12 @@
 import React, { MouseEventHandler, ReactNode } from "react";
-import { Button, Icon, Stack, Text, useColorModeValue } from "@chakra-ui/react";
+import {
+  Button,
+  Icon,
+  Stack,
+  Text,
+  useBreakpointValue,
+  useColorModeValue,
+} from "@chakra-ui/react";
 import { IoWallet } from "react-icons/io5";
 import { ConnectWalletType } from "../types";
 import { FiAlertTriangle } from "react-icons/fi";
@@ -12,8 +19,9 @@ export const ConnectWalletButton = ({
   icon,
   onClickConnectBtn,
 }: ConnectWalletType) => {
+  const width = useBreakpointValue({ base: "272px", sm: "272px", md: "" });
   return (
-    <Button onClick={onClickConnectBtn}>
+    <Button width={width} onClick={onClickConnectBtn}>
       <Icon as={icon ? icon : IoWallet} mr={2} />
       {buttonText ? buttonText : "Connect"}
     </Button>

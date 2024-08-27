@@ -78,7 +78,7 @@ export const WalletSection = () => {
 
   return (
     <Center py={16}>
-      <Box zIndex={1000} maxWidth={"100px"}>
+      <Box zIndex={1000} w={"full"}>
         {connectWalletButton}
       </Box>
     </Center>

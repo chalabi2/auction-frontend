@@ -1,4 +1,3 @@
-/* eslint-disable react-hooks/rules-of-hooks */
 import { useEffect, useState } from "react";
 import Head from "next/head";
 import { useChain } from "@cosmos-kit/react";
@@ -7,6 +6,7 @@ import { auction } from "@chalabi/gravity-bridgejs/dist/codegen";
 import { Auction } from "@chalabi/gravity-bridgejs/dist/codegen/auction/v1/auction";
 import { getDenominationInfo, formatTokenAmount } from "../config/denoms";
 import { FaSyncAlt } from "react-icons/fa";
+import { HamburgerIcon } from "@chakra-ui/icons";
 
 import {
   Heading,
@@ -21,9 +21,16 @@ import {
   TableContainer,
   Tbody,
   Td,
+  VStack,
   Th,
   Thead,
   Tr,
+  Drawer,
+  DrawerBody,
+  DrawerHeader,
+  DrawerOverlay,
+  DrawerContent,
+  DrawerCloseButton,
   Image,
   CircularProgress,
   CircularProgressLabel,
@@ -46,9 +53,9 @@ import {
   AlertTitle,
   Spinner,
   Link,
-  useMediaQuery,
   useColorModeValue,
   HStack,
+  useBreakpointValue,
 } from "@chakra-ui/react";
 import { BsFillMoonStarsFill, BsFillSunFill } from "react-icons/bs";
 
@@ -62,6 +69,7 @@ import { formatBidAmount, formatTotalBidCost } from "../utils/utils";
 
 import { useTx } from "../hooks/useTx";
 import { useFeeEstimation } from "../hooks/useFeeEstimation";
+import { DrawerControlProvider } from "../components/react/useDrawerControl";
 
 const gravitybridge = { auction };
 const createRPCQueryClient =
@@ -72,7 +80,7 @@ export default function Home() {
 
   const { colorMode, toggleColorMode } = useColorMode();
 
-  const [isLessThan1000px] = useMediaQuery("(max-width: 1000px)");
+  const isMobile = useBreakpointValue({ base: true, md: false });
   const { address } = useChain(chainName);
 
   const [auctionData, setAuctionData] = useState<Auction[]>([]);
@@ -204,6 +212,8 @@ export default function Home() {
     }
   };
 
+  const colorIcon = useColorModeValue(BsFillMoonStarsFill, BsFillSunFill);
+
   const [bidAmountInput, setBidAmountInput] = useState("0");
 
   const handleInputChange = (event: { target: { value: string } }) => {
@@ -224,6 +234,12 @@ export default function Home() {
   };
 
   const bidFeeAmount = `${auctionFeePrice.toString()}`;
+
+  const {
+    isOpen: isDrawerOpen,
+    onOpen: onDrawerOpen,
+    onClose: onDrawerClose,
+  } = useDisclosure();
 
   const renderAuctionModal = () => (
     <Modal isOpen={isOpen} onClose={onClose}>
@@ -369,158 +385,247 @@ export default function Home() {
 
   const hoverColor = useColorModeValue("gray.100", "gray.700");
 
+  const headColor = useColorModeValue("gray.50", "gray.700");
+
+  const renderMobileAuctionList = () => (
+    <Box>
+      {auctionData.map((auction, index) => (
+        <Box
+          key={index}
+          p={4}
+          borderWidth={1}
+          borderRadius="md"
+          mb={4}
+          onClick={() => handleRowClick(auction)}
+          _hover={{
+            bg: hoverColor,
+            cursor: "pointer",
+          }}
+        >
+          <Flex justifyContent="space-between" alignItems="center" mb={2}>
+            <Text fontWeight="bold">ID: {auction.id.toString()}</Text>
+            <Text>{getDenominationInfo(auction.amount?.denom).symbol}</Text>
+          </Flex>
+          <Text fontSize="sm" mb={2}>
+            Amount:{" "}
+            {formatTokenAmount(auction.amount?.amount, auction.amount?.denom)}
+          </Text>
+          <Text fontSize="sm" mb={2}>
+            Highest Bid:{" "}
+            {auction.highestBid
+              ? `${formatBidAmount(
+                  auction.highestBid.bidAmount.toString()
+                )} GRAV`
+              : "No Bid"}
+          </Text>
+          <Text fontSize="sm" isTruncated>
+            Bidder: {auction.highestBid?.bidderAddress || "N/A"}
+          </Text>
+        </Box>
+      ))}
+    </Box>
+  );
+
   return (
-    <Container maxW="container.xl" py={8}>
+    <Container maxW="container.xl" py={isMobile ? 4 : 0}>
       <Head>
         <title>Gravity Bridge Fee Auction</title>
         <meta name="description" content="Gravity Bridge Fee Auction App" />
         <link rel="icon" href="/favicon.ico" />
+        <link
+          rel="preconnect"
+          href="https://fonts.gstatic.com"
+          crossOrigin="true"
+        />
       </Head>
-      {!isLessThan1000px ? (
-        <>
-          <Flex justify="space-between" align="center">
-            <Flex justify="space-between" align="center" flexDir="row" gap={2}>
-              <Image
-                height="60px"
-                src={useColorModeValue("logolight.svg", "logodark.svg")}
-                alt="Gravity Bridge Logo"
-              />
-              <Heading as="h1" size="xl" fontWeight="hairline" lineHeight="10">
-                Fee Auction
-              </Heading>
-            </Flex>
 
-            <HStack spacing={4}>
-              <Button onClick={toggleColorMode}>
-                <Icon
-                  as={useColorModeValue(BsFillMoonStarsFill, BsFillSunFill)}
-                />
-              </Button>
-              <WalletSection />
-            </HStack>
-          </Flex>
-
-          {/* Auction Timer and Information Section */}
-          <Flex
-            flexDir={"row"}
-            justifyContent={"space-between"}
-            align="center"
-            p={4}
-            mb={1}
+      <Flex
+        justify="space-between"
+        align="center"
+        flexDirection={isMobile ? "column" : "row"}
+        mb={4}
+      >
+        <Flex
+          justify="space-between"
+          align="center"
+          flexDir={isMobile ? "column" : "row"}
+          gap={2}
+          mb={isMobile ? 4 : 0}
+        >
+          <Image
+            height={isMobile ? "40px" : "60px"}
+            src={useColorModeValue("logolight.svg", "logodark.svg")}
+            alt="Gravity Bridge Logo"
+            display={useBreakpointValue({
+              base: "none",
+              sm: "none",
+              md: "block",
+              lg: "block",
+            })}
+          />
+          <Heading
+            as="h1"
+            size={"xl"}
+            fontWeight="thin"
+            lineHeight="10"
+            mt={isMobile ? 2 : -0.65}
+            display={useBreakpointValue({
+              md: "none",
+              lg: "block",
+            })}
           >
-            <Heading as="h3" size="md">
-              Auction Information
-            </Heading>
-            <Flex flexDirection={"row"} justify={"space-between"} gap={4}>
-              <Text fontSize="sm">
-                Time Remaining: <strong>{auctionTimer.remainingTime}</strong>
-              </Text>
+            Fee Auction
+          </Heading>
+        </Flex>
 
-              <Text fontSize="sm">
-                Blocks Remaining:{" "}
-                <strong>{auctionTimer.remainingBlocks}</strong>
-              </Text>
-            </Flex>
+        {isMobile ? (
+          <Button position="absolute" right={2} onClick={onDrawerOpen}>
+            <HamburgerIcon />
+          </Button>
+        ) : (
+          <HStack spacing={4}>
+            <Button onClick={toggleColorMode}>
+              <Icon as={colorIcon} />
+            </Button>
+            <WalletSection />
+          </HStack>
+        )}
+      </Flex>
 
-            <Flex align="center">
-              <Tooltip label="Auction refetch timer">
-                <CircularProgress
-                  value={(timer / 30) * 100}
-                  color="blue.400"
-                  size="35px"
-                >
-                  <CircularProgressLabel>{timer}</CircularProgressLabel>
-                </CircularProgress>
-              </Tooltip>
-              <Button
-                size="55px"
-                onClick={fetchAuctions}
-                variant="ghost"
-                ml={4}
-              >
-                <Icon as={FaSyncAlt} />
-              </Button>
-            </Flex>
-          </Flex>
-
-          {/* Auction Table */}
-          <Box
-            borderWidth={1}
-            borderColor={useColorModeValue("gray.200", "gray.700")}
-            borderRadius="lg"
-            overflow="hidden"
-            boxShadow="lg"
-          >
-            <TableContainer maxH="545px" overflowY="auto">
-              <Table variant="simple">
-                <Thead
-                  position="sticky"
-                  top={0}
-                  zIndex={1}
-                  bg={useColorModeValue("gray.50", "gray.700")}
-                >
-                  <Tr>
-                    <Th>ID</Th>
-                    <Th>Token</Th>
-                    <Th>Amount</Th>
-                    <Th>Highest Bid</Th>
-                    <Th>Bidder</Th>
-                  </Tr>
-                </Thead>
-                <Tbody>
-                  {auctionData.map((auction, index) => (
-                    <Tr
-                      key={index}
-                      onClick={() => handleRowClick(auction)}
-                      _hover={{
-                        bg: hoverColor,
-                        cursor: "pointer",
-                      }}
-                    >
-                      <Td>{auction.id.toString()}</Td>
-                      <Td>
-                        {getDenominationInfo(auction.amount?.denom).symbol}
-                      </Td>
-                      <Td>
-                        {formatTokenAmount(
-                          auction.amount?.amount,
-                          auction.amount?.denom
-                        )}
-                      </Td>
-                      <Td>
-                        {auction.highestBid
-                          ? `${formatBidAmount(
-                              auction.highestBid.bidAmount.toString()
-                            )} GRAV`
-                          : "No Bid"}
-                      </Td>
-                      <Td>{auction.highestBid?.bidderAddress || "N/A"}</Td>
-                    </Tr>
-                  ))}
-                </Tbody>
-              </Table>
-            </TableContainer>
-          </Box>
-
-          {renderAuctionModal()}
-          <Box as="footer" mt={4} textAlign="center" py={4}>
-            <Text fontSize="sm" color="gray.500">
-              Built by{" "}
-              <Link href="https://chandrastation.com">Chandra Station</Link>
-            </Text>
-            <Text fontSize="xs" color="gray.500">
-              Alpha v0.2.0
-            </Text>
-          </Box>
-        </>
-      ) : (
-        <Box background={"rgba(0,0,0,0.1)"} padding={4} borderRadius="md">
-          <Text>
-            This app is not optimized for mobile devices. Please switch to a
-            desktop or laptop.
+      {/* Mobile Drawer */}
+      <DrawerControlProvider
+        closeDrawer={onDrawerClose}
+        onDrawerClose={onDrawerClose}
+      >
+        <Drawer isOpen={isDrawerOpen} placement="right" onClose={onDrawerClose}>
+          <DrawerOverlay />
+          <DrawerContent>
+            <DrawerCloseButton />
+            <DrawerHeader>Menu</DrawerHeader>
+            <DrawerBody>
+              <VStack spacing={-10} justifyContent="center" alignItems="center">
+                <Button onClick={toggleColorMode} width="100%">
+                  <Icon
+                    as={useColorModeValue(BsFillMoonStarsFill, BsFillSunFill)}
+                    mr={2}
+                  />
+                  {colorMode === "light" ? "Dark Mode" : "Light Mode"}
+                </Button>
+                <WalletSection />
+              </VStack>
+            </DrawerBody>
+          </DrawerContent>
+        </Drawer>
+      </DrawerControlProvider>
+      {/* Auction Timer and Information Section */}
+      <Flex
+        flexDir={isMobile ? "column" : "row"}
+        justifyContent="space-between"
+        align={isMobile ? "flex-start" : "center"}
+        p={4}
+        mb={4}
+        borderWidth={1}
+        borderRadius="md"
+      >
+        <Heading as="h3" size="md" mb={isMobile ? 2 : 0}>
+          Auction Information
+        </Heading>
+        <Flex
+          flexDirection={isMobile ? "column" : "row"}
+          gap={4}
+          mb={isMobile ? 2 : 0}
+        >
+          <Text fontSize="sm">
+            Time Remaining: <strong>{auctionTimer.remainingTime}</strong>
           </Text>
-        </Box>
-      )}
+          <Text fontSize="sm">
+            Blocks Remaining: <strong>{auctionTimer.remainingBlocks}</strong>
+          </Text>
+        </Flex>
+        <Flex align="center">
+          <Tooltip label="Auction refetch timer">
+            <CircularProgress
+              value={(timer / 30) * 100}
+              color="blue.400"
+              size="35px"
+            >
+              <CircularProgressLabel>{timer}</CircularProgressLabel>
+            </CircularProgress>
+          </Tooltip>
+          <Button size="55px" onClick={fetchAuctions} variant="ghost" ml={4}>
+            <Icon as={FaSyncAlt} />
+          </Button>
+        </Flex>
+      </Flex>
+
+      {/* Auction Table or List */}
+      <Box
+        borderWidth={1}
+        borderColor={useColorModeValue("gray.200", "gray.700")}
+        borderRadius="lg"
+        overflow="hidden"
+        boxShadow="lg"
+      >
+        {isMobile ? (
+          <Box maxH="545px" overflowY="auto" p={4}>
+            {renderMobileAuctionList()}
+          </Box>
+        ) : (
+          <TableContainer maxH="545px" overflowY="auto">
+            <Table variant="simple">
+              <Thead position="sticky" top={0} zIndex={1} bg={headColor}>
+                <Tr>
+                  <Th>ID</Th>
+                  <Th>Token</Th>
+                  <Th>Amount</Th>
+                  <Th>Highest Bid</Th>
+                  <Th>Bidder</Th>
+                </Tr>
+              </Thead>
+              <Tbody>
+                {auctionData.map((auction, index) => (
+                  <Tr
+                    key={index}
+                    onClick={() => handleRowClick(auction)}
+                    _hover={{
+                      bg: hoverColor,
+                      cursor: "pointer",
+                    }}
+                  >
+                    <Td>{auction.id.toString()}</Td>
+                    <Td>{getDenominationInfo(auction.amount?.denom).symbol}</Td>
+                    <Td>
+                      {formatTokenAmount(
+                        auction.amount?.amount,
+                        auction.amount?.denom
+                      )}
+                    </Td>
+                    <Td>
+                      {auction.highestBid
+                        ? `${formatBidAmount(
+                            auction.highestBid.bidAmount.toString()
+                          )} GRAV`
+                        : "No Bid"}
+                    </Td>
+                    <Td>{auction.highestBid?.bidderAddress || "N/A"}</Td>
+                  </Tr>
+                ))}
+              </Tbody>
+            </Table>
+          </TableContainer>
+        )}
+      </Box>
+
+      {renderAuctionModal()}
+      <Box as="footer" mt={4} textAlign="center" py={4}>
+        <Text fontSize="sm" color="gray.500">
+          Built by{" "}
+          <Link href="https://chandrastation.com">Chandra Station</Link>
+        </Text>
+        <Text fontSize="xs" color="gray.500">
+          Alpha v0.2.0
+        </Text>
+      </Box>
     </Container>
   );
 }
