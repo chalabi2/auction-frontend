@@ -84,7 +84,7 @@ export default function Home() {
   const { address } = useChain(chainName);
 
   const [auctionData, setAuctionData] = useState<Auction[]>([]);
-  console.log(auctionData);
+
   const [isLoading, setIsLoading] = useState(false);
   const [timer, setTimer] = useState(30);
 
