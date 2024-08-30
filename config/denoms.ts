@@ -271,6 +271,24 @@ export const chainDenoms: ChainDenominations = {
       logoURI: '',
       priceDenom: 'uni-v2'
     },
+    gravity0x83F20F44975D03b1b09e64809B757c47f942BEeA: {
+      name: 'Savings Dai',
+      denom: 'gravity0x83F20F44975D03b1b09e64809B757c47f942BEeA',
+      symbol: 'sDAI',
+      coinId: 'sdai',
+      decimals: 18,
+      logoURI: '',
+      priceDenom: 'sdai'
+    },
+    gravity0xaea46A60368A7bD060eec7DF8CBa43b7EF41Ad85: {
+      name: 'Fetch Token',
+      denom: 'gravity0xaea46A60368A7bD060eec7DF8CBa43b7EF41Ad85',
+      symbol: 'FET',
+      coinId: 'fet',
+      decimals: 18,
+      logoURI: '',
+      priceDenom: 'fet'
+    },
     'ibc/3DA3455A6E8EBE1C7EF5C83FDED825B94C13A9303A7FA54C098F13A091B00CE1': {
       name: 'AQLA Token',
       denom: '3DA3455A6E8EBE1C7EF5C83FDED825B94C13A9303A7FA54C098F13A091B00CE1',
