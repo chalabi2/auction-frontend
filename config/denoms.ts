@@ -334,6 +334,15 @@ export const chainDenoms: ChainDenominations = {
       logoURI: 'https://raw.githubusercontent.com/cosmostation/cosmostation_token_resource/master/coin_image/tokens/token-stargaze.svg',
       priceDenom: 'ustars'
     },
+    'ibc/8A9D880B05E818FDB1BD2DCAA36FB48D51F4DE0F453DA22D7AD5A96E15185A53': {
+      name: 'Ixo',
+      denom: 'ibc/8A9D880B05E818FDB1BD2DCAA36FB48D51F4DE0F453DA22D7AD5A96E15185A53',
+      symbol: 'IXO',
+      coinId: 'ixo',
+      decimals: 6,
+      logoURI: '',
+      priceDenom: 'uixo'
+    },
     'ibc/5012B1C96F286E8A6604A87037CE51241C6F1CA195B71D1E261FCACB69FB6BC2': {
       name: 'CHEQ',
       denom: 'ibc/5012B1C96F286E8A6604A87037CE51241C6F1CA195B71D1E261FCACB69FB6BC2',
