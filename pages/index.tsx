@@ -5,6 +5,7 @@ import { useChain } from "@cosmos-kit/react";
 import { auction } from "@chalabi/gravity-bridgejs/dist/codegen";
 import { Auction } from "@chalabi/gravity-bridgejs/dist/codegen/auction/v1/auction";
 import { getDenominationInfo, formatTokenAmount } from "../config/denoms";
+import { createAuthEndpoint, DEFAULT_RPC_ENDPOINT } from "../config/auth";
 import { FaSyncAlt } from "react-icons/fa";
 import { HamburgerIcon } from "@chakra-ui/icons";
 
@@ -75,6 +76,29 @@ const gravitybridge = { auction };
 const createRPCQueryClient =
   gravitybridge.auction.ClientFactory.createRPCQueryClient;
 
+// Helper function to create RPC client with auth headers
+const createAuthenticatedRPCClient = async (endpoint: string) => {
+  console.log("Creating RPC client for endpoint:", endpoint);
+
+  // If using the local proxy, don't add auth headers (proxy handles it)
+  const isUsingProxy = endpoint.includes("localhost:3000/api/rpc-proxy");
+  const endpointConfig = isUsingProxy ? endpoint : createAuthEndpoint(endpoint);
+
+  console.log("Endpoint config:", endpointConfig);
+
+  // Create the client with the endpoint configuration
+  try {
+    const client = await createRPCQueryClient({
+      rpcEndpoint: endpointConfig,
+    });
+    console.log("RPC client created successfully");
+    return client;
+  } catch (error) {
+    console.error("Failed to create RPC client:", error);
+    throw error;
+  }
+};
+
 export default function Home() {
   const { tx } = useTx("gravitybridge");
 
@@ -86,7 +110,7 @@ export default function Home() {
   const [auctionData, setAuctionData] = useState<Auction[]>([]);
 
   const [isLoading, setIsLoading] = useState(false);
-  const [timer, setTimer] = useState(30);
+  const [timer, setTimer] = useState(35);
 
   // State to store the remaining blocks and time
   const [auctionTimer, setAuctionTimer] = useState({
@@ -94,12 +118,13 @@ export default function Home() {
     remainingTime: "",
   });
   const [auctionFeePrice, setAuctionFeePrice] = useState<bigint>(BigInt(0));
+  const [cacheStatus, setCacheStatus] = useState<"HIT" | "MISS" | null>(null);
 
   // Function to fetch the current block height
   const fetchCurrentBlockHeight = async () => {
-    const clientAuction = await createRPCQueryClient({
-      rpcEndpoint: "https://nodes.chandrastation.com/rpc/gravity/",
-    });
+    const clientAuction = await createAuthenticatedRPCClient(
+      DEFAULT_RPC_ENDPOINT
+    );
 
     const currentHeightResponse =
       await clientAuction.cosmos.base.tendermint.v1beta1.getLatestBlock();
@@ -108,9 +133,9 @@ export default function Home() {
 
   // Function to calculate and update the auction timer
   const fetchAuctionTimer = async () => {
-    const clientAuction = await createRPCQueryClient({
-      rpcEndpoint: "https://nodes.chandrastation.com/rpc/gravity/",
-    });
+    const clientAuction = await createAuthenticatedRPCClient(
+      DEFAULT_RPC_ENDPOINT
+    );
     const times = await clientAuction.auction.v1.auctionPeriod();
     const params = await clientAuction.auction.v1.params();
 
@@ -135,9 +160,9 @@ export default function Home() {
   }, []);
 
   const fetchAuctions = async () => {
-    const clientAuction = await createRPCQueryClient({
-      rpcEndpoint: "https://nodes.chandrastation.com/rpc/gravity/",
-    });
+    const clientAuction = await createAuthenticatedRPCClient(
+      DEFAULT_RPC_ENDPOINT
+    );
     setIsLoading(true);
     try {
       const response = await clientAuction.auction.v1.auctions();
@@ -145,26 +170,34 @@ export default function Home() {
       if (response && response.auctions) {
         setAuctionData(response.auctions);
       }
+
+      // Note: Cache status would be available if we were making direct HTTP requests
+      // Since we're using the RPC client, we can't easily access response headers
+      // In a real implementation, you might want to modify the RPC client or use a different approach
     } catch (error) {
       console.error("Failed to fetch auctions:", error);
     }
     setIsLoading(false);
-    setTimer(30);
+    setTimer(35);
     fetchAuctionTimer();
   };
 
   useEffect(() => {
     fetchAuctions();
 
+    // Reduced polling frequency since server caches for 30 seconds
+    // Poll every 35 seconds to get fresh data after cache expires
     const interval = setInterval(() => {
       fetchAuctions();
-    }, 30000);
+    }, 35000);
 
     return () => clearInterval(interval);
   }, []);
+
   useEffect(() => {
     const countdown = setInterval(() => {
-      setTimer((prev: number) => (prev > 0 ? prev - 1 : 30));
+      // Update timer to reflect new 35-second interval
+      setTimer((prev: number) => (prev > 0 ? prev - 1 : 35));
     }, 1000);
 
     return () => clearInterval(countdown);
@@ -545,16 +578,13 @@ export default function Home() {
         <Flex align="center">
           <Tooltip label="Auction refetch timer">
             <CircularProgress
-              value={(timer / 30) * 100}
+              value={(timer / 35) * 100}
               color="blue.400"
               size="35px"
             >
               <CircularProgressLabel>{timer}</CircularProgressLabel>
             </CircularProgress>
           </Tooltip>
-          <Button size="55px" onClick={fetchAuctions} variant="ghost" ml={4}>
-            <Icon as={FaSyncAlt} />
-          </Button>
         </Flex>
       </Flex>
 

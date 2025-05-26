@@ -3,7 +3,12 @@ import "../styles/globals.css";
 import type { AppProps } from "next/app";
 import { ChainProvider } from "@cosmos-kit/react";
 import { ChakraProvider } from "@chakra-ui/react";
-import { defaultTheme } from "../config";
+import {
+  defaultTheme,
+  createAuthEndpoint,
+  DEFAULT_RPC_ENDPOINT,
+  DEFAULT_REST_ENDPOINT,
+} from "../config";
 import { wallets } from "cosmos-kit";
 
 import { assets, chain } from "chain-registry/mainnet/gravitybridge";
@@ -41,8 +46,8 @@ function CreateCosmosApp({ Component, pageProps }: AppProps) {
         endpointOptions={{
           endpoints: {
             gravitybridge: {
-              rpc: ["https://nodes.chandrastation.com/rpc/gravity/"],
-              rest: ["https://nodes.chandrastation.com/api/gravity/"],
+              rpc: [createAuthEndpoint(DEFAULT_RPC_ENDPOINT)],
+              rest: [createAuthEndpoint(DEFAULT_REST_ENDPOINT)],
             },
           },
         }}
