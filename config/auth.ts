@@ -55,7 +55,7 @@ export const createAuthHeaders = (config?: AuthConfig): Record<string, string> =
  */
 export const createAuthEndpoint = (url: string, config?: AuthConfig): HttpEndpoint | string => {
   // Check if we're using the proxy (which handles auth server-side)
-  const isUsingProxy = url.includes('localhost:3000/api/rpc-proxy');
+  const isUsingProxy = url.includes('/api/rpc-proxy') || url.includes('localhost:3000/api/rpc-proxy');
   
   // If using proxy, don't add auth headers (proxy handles auth)
   if (isUsingProxy) {
@@ -79,9 +79,22 @@ export const createAuthEndpoint = (url: string, config?: AuthConfig): HttpEndpoi
 /**
  * Default RPC endpoint with auth
  */
-export const DEFAULT_RPC_ENDPOINT = process.env.NODE_ENV === 'development' 
-  ? "http://localhost:3000/api/rpc-proxy"
-  : "https://api.chandrastation.com/rpc/gravity/";
+export const DEFAULT_RPC_ENDPOINT = (() => {
+  // Check if we're in a browser environment
+  if (typeof window !== 'undefined') {
+    // Client-side: use relative URL to the proxy
+    return "/api/rpc-proxy";
+  }
+  
+  // Server-side: use full URL for development
+  if (process.env.NODE_ENV === 'development') {
+    return "http://localhost:3000/api/rpc-proxy";
+  }
+  
+  // For production builds, we'll use the proxy if available
+  // This works for Vercel, Netlify, and other platforms with API route support
+  return "/api/rpc-proxy";
+})();
 
 /**
  * Default REST endpoint with auth  

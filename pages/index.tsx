@@ -80,8 +80,10 @@ const createRPCQueryClient =
 const createAuthenticatedRPCClient = async (endpoint: string) => {
   console.log("Creating RPC client for endpoint:", endpoint);
 
-  // If using the local proxy, don't add auth headers (proxy handles it)
-  const isUsingProxy = endpoint.includes("localhost:3000/api/rpc-proxy");
+  // If using the proxy, don't add auth headers (proxy handles it)
+  const isUsingProxy =
+    endpoint.includes("/api/rpc-proxy") ||
+    endpoint.includes("localhost:3000/api/rpc-proxy");
   const endpointConfig = isUsingProxy ? endpoint : createAuthEndpoint(endpoint);
 
   console.log("Endpoint config:", endpointConfig);
