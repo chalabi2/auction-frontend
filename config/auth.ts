@@ -18,11 +18,10 @@ export interface HttpEndpoint {
  */
 export const getAuthConfig = (): AuthConfig => {
   return {
-    token: process.env.NEXT_PUBLIC_AUTH_TOKEN || undefined,
-    apiKey: process.env.NEXT_PUBLIC_API_KEY || undefined,
+    apiKey: process.env.API_KEY || undefined,
     // Add any custom headers here
     customHeaders: {
-      // Example: "X-Custom-Header": process.env.NEXT_PUBLIC_CUSTOM_HEADER || undefined,
+      // Example: "X-Custom-Header": process.env.CUSTOM_HEADER || undefined,
     },
   };
 };
@@ -37,10 +36,6 @@ export const createAuthHeaders = (config?: AuthConfig): Record<string, string> =
   // Use API key as bearer token if provided and no separate token exists
   if (authConfig.apiKey && authConfig.apiKey.trim() !== "") {
     headers["Authorization"] = `Bearer ${authConfig.apiKey}`;
-  }
-  // Fallback to token if provided and not empty
-  else if (authConfig.token && authConfig.token.trim() !== "") {
-    headers["Authorization"] = `Bearer ${authConfig.token}`;
   }
 
   // Add any custom headers
@@ -59,12 +54,26 @@ export const createAuthHeaders = (config?: AuthConfig): Record<string, string> =
  * Create an endpoint configuration with auth headers
  */
 export const createAuthEndpoint = (url: string, config?: AuthConfig): HttpEndpoint | string => {
-  const headers = createAuthHeaders(config);
+  // Check if we're using the proxy (which handles auth server-side)
+  const isUsingProxy = url.includes('localhost:3000/api/rpc-proxy');
   
-  // Return HttpEndpoint object if headers exist, otherwise return string
-  return Object.keys(headers).length > 0 
-    ? { url, headers }
-    : url;
+  // If using proxy, don't add auth headers (proxy handles auth)
+  if (isUsingProxy) {
+    return url;
+  }
+  
+  // For direct API calls, try to add auth headers
+  const authConfig = config || getAuthConfig();
+  
+  // Only add headers if we have an API key available
+  if (authConfig.apiKey && authConfig.apiKey.trim() !== "") {
+    const headers = createAuthHeaders(authConfig);
+    return Object.keys(headers).length > 0 ? { url, headers } : url;
+  }
+  
+  // If no API key available (e.g., in client-side context), return plain URL
+  // This will work for public endpoints or when auth is handled elsewhere
+  return url;
 };
 
 /**

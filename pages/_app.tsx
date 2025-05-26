@@ -40,14 +40,18 @@ function CreateCosmosApp({ Component, pageProps }: AppProps) {
     },
   };
 
+  // Create endpoint configurations
+  const rpcEndpoint = createAuthEndpoint(DEFAULT_RPC_ENDPOINT);
+  const restEndpoint = createAuthEndpoint(DEFAULT_REST_ENDPOINT);
+
   return (
     <ChakraProvider theme={defaultTheme}>
       <ChainProvider
         endpointOptions={{
           endpoints: {
             gravitybridge: {
-              rpc: [createAuthEndpoint(DEFAULT_RPC_ENDPOINT)],
-              rest: [createAuthEndpoint(DEFAULT_REST_ENDPOINT)],
+              rpc: [rpcEndpoint],
+              rest: [restEndpoint],
             },
           },
         }}

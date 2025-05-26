@@ -10,6 +10,12 @@ export default async function handler(
 ) {
   const { method, query } = req;
 
+  // Optional: Add basic authentication for cache control endpoints
+  const apiKey = process.env.API_KEY;
+  if (!apiKey) {
+    return res.status(500).json({ error: 'Server configuration error' });
+  }
+
   switch (method) {
     case 'GET':
       // Get cache statistics

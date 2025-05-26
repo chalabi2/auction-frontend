@@ -11,8 +11,8 @@ export default async function handler(
   }
 
   try {
-    // Get the API key from environment variables
-    const apiKey = process.env.NEXT_PUBLIC_API_KEY;
+    // Get the API key from server-side environment variables
+    const apiKey = process.env.API_KEY;
     
     if (!apiKey) {
       return res.status(500).json({ error: 'API key not configured' });
