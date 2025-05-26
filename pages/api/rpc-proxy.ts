@@ -30,6 +30,9 @@ export default async function handler(
       res.setHeader('X-Cache', 'HIT');
       res.setHeader('X-Cache-Age', cacheManager.getEntryAge(cacheKey) || 0);
       
+      // Add Vercel-specific caching headers
+      res.setHeader('Cache-Control', 's-maxage=30, stale-while-revalidate=60');
+      
       return res.status(200).json(cachedData);
     }
 
@@ -65,6 +68,9 @@ export default async function handler(
     // Add cache headers to response
     res.setHeader('X-Cache', 'MISS');
     res.setHeader('X-Cache-TTL', CACHE_TTL.RPC_QUERIES / 1000);
+    
+    // Add Vercel-specific caching headers
+    res.setHeader('Cache-Control', 's-maxage=30, stale-while-revalidate=60');
     
     console.log(`Cached response for key: ${cacheKey.substring(0, 50)}... (TTL: ${CACHE_TTL.RPC_QUERIES}ms)`);
 
