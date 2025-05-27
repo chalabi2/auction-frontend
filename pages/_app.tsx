@@ -41,8 +41,21 @@ function CreateCosmosApp({ Component, pageProps }: AppProps) {
   };
 
   // Create endpoint configurations
-  const rpcEndpoint = createAuthEndpoint(DEFAULT_RPC_ENDPOINT);
-  const restEndpoint = createAuthEndpoint(DEFAULT_REST_ENDPOINT);
+  const rpcEndpointConfig = createAuthEndpoint(DEFAULT_RPC_ENDPOINT);
+  const restEndpointConfig = createAuthEndpoint(DEFAULT_REST_ENDPOINT);
+
+  // Extract URLs from endpoint configurations
+  const rpcEndpoint =
+    typeof rpcEndpointConfig === "object" && rpcEndpointConfig.url
+      ? rpcEndpointConfig.url
+      : (rpcEndpointConfig as string);
+  const restEndpoint =
+    typeof restEndpointConfig === "object" && restEndpointConfig.url
+      ? restEndpointConfig.url
+      : (restEndpointConfig as string);
+
+  console.log("ChainProvider RPC endpoint:", rpcEndpoint);
+  console.log("ChainProvider REST endpoint:", restEndpoint);
 
   return (
     <ChakraProvider theme={defaultTheme}>

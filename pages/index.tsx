@@ -78,22 +78,30 @@ const createRPCQueryClient =
 
 // Helper function to create RPC client with auth headers
 const createAuthenticatedRPCClient = async (endpoint: string) => {
-  console.log("Creating RPC client for endpoint:", endpoint);
-
   // If using the proxy, don't add auth headers (proxy handles it)
   const isUsingProxy =
     endpoint.includes("/api/rpc-proxy") ||
     endpoint.includes("localhost:3000/api/rpc-proxy");
-  const endpointConfig = isUsingProxy ? endpoint : createAuthEndpoint(endpoint);
 
-  console.log("Endpoint config:", endpointConfig);
+  let finalEndpoint: string;
+
+  if (isUsingProxy) {
+    finalEndpoint = endpoint;
+  } else {
+    const endpointConfig = createAuthEndpoint(endpoint);
+    // If createAuthEndpoint returns an HttpEndpoint object, extract the URL
+    if (typeof endpointConfig === "object" && endpointConfig.url) {
+      finalEndpoint = endpointConfig.url;
+    } else {
+      finalEndpoint = endpointConfig as string;
+    }
+  }
 
   // Create the client with the endpoint configuration
   try {
     const client = await createRPCQueryClient({
-      rpcEndpoint: endpointConfig,
+      rpcEndpoint: finalEndpoint,
     });
-    console.log("RPC client created successfully");
     return client;
   } catch (error) {
     console.error("Failed to create RPC client:", error);
@@ -110,7 +118,6 @@ export default function Home() {
   const { address } = useChain(chainName);
 
   const [auctionData, setAuctionData] = useState<Auction[]>([]);
-
   const [isLoading, setIsLoading] = useState(false);
   const [timer, setTimer] = useState(35);
 
@@ -122,83 +129,76 @@ export default function Home() {
   const [auctionFeePrice, setAuctionFeePrice] = useState<bigint>(BigInt(0));
   const [cacheStatus, setCacheStatus] = useState<"HIT" | "MISS" | null>(null);
 
-  // Function to fetch the current block height
-  const fetchCurrentBlockHeight = async () => {
-    const clientAuction = await createAuthenticatedRPCClient(
-      DEFAULT_RPC_ENDPOINT
-    );
-
-    const currentHeightResponse =
-      await clientAuction.cosmos.base.tendermint.v1beta1.getLatestBlock();
-    return currentHeightResponse?.block?.header?.height || 0;
-  };
-
-  // Function to calculate and update the auction timer
-  const fetchAuctionTimer = async () => {
-    const clientAuction = await createAuthenticatedRPCClient(
-      DEFAULT_RPC_ENDPOINT
-    );
-    const times = await clientAuction.auction.v1.auctionPeriod();
-    const params = await clientAuction.auction.v1.params();
-
-    const auctionFeePrice = params.params.minBidFee;
-    setAuctionFeePrice(auctionFeePrice);
-    const endBlockHeight = times.auctionPeriod?.endBlockHeight.toString() || 0;
-    const currentBlockHeight = await fetchCurrentBlockHeight();
-
-    const remainingBlocks = Number(endBlockHeight) - Number(currentBlockHeight);
-    const totalSeconds = remainingBlocks * 6; // Assuming each block takes an average of 6 seconds
-
-    const hours = Math.floor(totalSeconds / 3600);
-    const minutes = Math.floor((totalSeconds % 3600) / 60);
-
-    const formattedTime = `~${hours}h ${minutes}m`;
-
-    setAuctionTimer({ remainingBlocks, remainingTime: formattedTime });
-  };
-
-  useEffect(() => {
-    fetchAuctionTimer();
-  }, []);
-
-  const fetchAuctions = async () => {
-    const clientAuction = await createAuthenticatedRPCClient(
-      DEFAULT_RPC_ENDPOINT
-    );
+  // Single comprehensive data fetch function that gets all required data
+  const fetchAllData = async () => {
     setIsLoading(true);
-    try {
-      const response = await clientAuction.auction.v1.auctions();
 
-      if (response && response.auctions) {
-        setAuctionData(response.auctions);
+    try {
+      const clientAuction = await createAuthenticatedRPCClient(
+        DEFAULT_RPC_ENDPOINT
+      );
+
+      // Fetch all data in parallel to minimize total request time
+      const [
+        auctionsResponse,
+        auctionPeriodResponse,
+        paramsResponse,
+        currentHeightResponse,
+      ] = await Promise.all([
+        clientAuction.auction.v1.auctions(),
+        clientAuction.auction.v1.auctionPeriod(),
+        clientAuction.auction.v1.params(),
+        clientAuction.cosmos.base.tendermint.v1beta1.getLatestBlock(),
+      ]);
+
+      // Update auction data
+      if (auctionsResponse && auctionsResponse.auctions) {
+        setAuctionData(auctionsResponse.auctions);
       }
 
-      // Note: Cache status would be available if we were making direct HTTP requests
-      // Since we're using the RPC client, we can't easily access response headers
-      // In a real implementation, you might want to modify the RPC client or use a different approach
+      // Update auction fee price
+      const auctionFeePrice = paramsResponse.params.minBidFee;
+      setAuctionFeePrice(auctionFeePrice);
+
+      // Calculate auction timer
+      const endBlockHeight =
+        auctionPeriodResponse.auctionPeriod?.endBlockHeight.toString() || 0;
+      const currentBlockHeight =
+        currentHeightResponse?.block?.header?.height || 0;
+      const remainingBlocks =
+        Number(endBlockHeight) - Number(currentBlockHeight);
+      const totalSeconds = remainingBlocks * 6; // Assuming each block takes an average of 6 seconds
+      const hours = Math.floor(totalSeconds / 3600);
+      const minutes = Math.floor((totalSeconds % 3600) / 60);
+      const formattedTime = `~${hours}h ${minutes}m`;
+
+      setAuctionTimer({ remainingBlocks, remainingTime: formattedTime });
     } catch (error) {
-      console.error("Failed to fetch auctions:", error);
+      console.error("Failed to fetch data:", error);
+    } finally {
+      setIsLoading(false);
+      setTimer(35); // Reset timer for next fetch
     }
-    setIsLoading(false);
-    setTimer(35);
-    fetchAuctionTimer();
   };
 
+  // Initial data fetch on component mount
   useEffect(() => {
-    fetchAuctions();
+    fetchAllData();
+  }, []);
 
-    // Reduced polling frequency since server caches for 30 seconds
-    // Poll every 35 seconds to get fresh data after cache expires
+  // Set up polling interval - fetch all data every 35 seconds
+  // This aligns with server cache expiration (30s) plus buffer
+  useEffect(() => {
     const interval = setInterval(() => {
-      fetchAuctions();
+      fetchAllData();
     }, 35000);
 
     return () => clearInterval(interval);
   }, []);
 
+  // Countdown timer for UI feedback
   useEffect(() => {
     const countdown = setInterval(() => {
-      // Update timer to reflect new 35-second interval
       setTimer((prev: number) => (prev > 0 ? prev - 1 : 35));
     }, 1000);
 

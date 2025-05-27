@@ -24,8 +24,6 @@ export default async function handler(
     // Check if we have a valid cached response
     const cachedData = cacheManager.get(cacheKey);
     if (cachedData) {
-      console.log(`Cache HIT for key: ${cacheKey.substring(0, 50)}...`);
-      
       // Add cache headers to response
       res.setHeader('X-Cache', 'HIT');
       res.setHeader('X-Cache-Age', cacheManager.getEntryAge(cacheKey) || 0);
@@ -35,8 +33,6 @@ export default async function handler(
       
       return res.status(200).json(cachedData);
     }
-
-    console.log(`Cache MISS for key: ${cacheKey.substring(0, 50)}...`);
 
     // Forward the request to the actual RPC endpoint
     const response = await fetch('https://api.chandrastation.com/rpc/gravity/', {
@@ -51,6 +47,7 @@ export default async function handler(
     const data = await response.json();
 
     if (!response.ok) {
+      console.error(`External API error (${response.status}):`, data.message || data.error);
       return res.status(response.status).json(data);
     }
 
@@ -71,8 +68,6 @@ export default async function handler(
     
     // Add Vercel-specific caching headers
     res.setHeader('Cache-Control', 's-maxage=30, stale-while-revalidate=60');
-    
-    console.log(`Cached response for key: ${cacheKey.substring(0, 50)}... (TTL: ${CACHE_TTL.RPC_QUERIES}ms)`);
 
     res.status(200).json(data);
   } catch (error) {

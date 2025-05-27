@@ -82,8 +82,8 @@ export const createAuthEndpoint = (url: string, config?: AuthConfig): HttpEndpoi
 export const DEFAULT_RPC_ENDPOINT = (() => {
   // Check if we're in a browser environment
   if (typeof window !== 'undefined') {
-    // Client-side: use relative URL to the proxy
-    return "/api/rpc-proxy";
+    // Client-side: use full URL to the proxy based on current origin
+    return `${window.location.origin}/api/rpc-proxy`;
   }
   
   // Server-side: use full URL for development
@@ -91,8 +91,8 @@ export const DEFAULT_RPC_ENDPOINT = (() => {
     return "http://localhost:3000/api/rpc-proxy";
   }
   
-  // For production builds, we'll use the proxy if available
-  // This works for Vercel, Netlify, and other platforms with API route support
+  // For production server-side rendering, we need to construct the URL
+  // This will be used during build time, so we'll default to the proxy path
   return "/api/rpc-proxy";
 })();
 
