@@ -12,7 +12,7 @@ export default async function handler(
 
   // Optional: Add basic authentication for cache control endpoints
   const apiKey = process.env.API_KEY;
-  if (!apiKey) {
+  if (apiKey !== process.env.API_KEY) {
     return res.status(500).json({ error: 'Server configuration error' });
   }
 
