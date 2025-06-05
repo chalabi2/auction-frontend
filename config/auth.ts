@@ -17,8 +17,18 @@ export interface HttpEndpoint {
  * Get auth configuration from environment variables
  */
 export const getAuthConfig = (): AuthConfig => {
+  // Try multiple possible environment variable names
+  // In server context, we can access all env vars
+  // In client context, only NEXT_PUBLIC_ vars are available
+  const apiKey = (typeof window === 'undefined' 
+    ? (process.env.API_KEY || 
+       process.env.NEXT_PUBLIC_API_KEY || 
+       process.env.VERCEL_API_KEY ||
+       process.env.CHANDRASTATION_API_KEY)
+    : process.env.NEXT_PUBLIC_API_KEY) || undefined;
+
   return {
-    apiKey: process.env.API_KEY || undefined,
+    apiKey,
     // Add any custom headers here
     customHeaders: {
       // Example: "X-Custom-Header": process.env.CUSTOM_HEADER || undefined,
@@ -82,7 +92,12 @@ export const createAuthEndpoint = (url: string, config?: AuthConfig): HttpEndpoi
 export const DEFAULT_RPC_ENDPOINT = (() => {
   // Check if we're in a browser environment
   if (typeof window !== 'undefined') {
-    // Client-side: use full URL to the proxy based on current origin
+    // For production, try proxy first but fallback to direct if needed
+    if (process.env.NODE_ENV === 'production') {
+      // In production, we'll handle the fallback in the client code
+      return `${window.location.origin}/api/rpc-proxy`;
+    }
+    // Development: use proxy
     return `${window.location.origin}/api/rpc-proxy`;
   }
   
@@ -91,10 +106,14 @@ export const DEFAULT_RPC_ENDPOINT = (() => {
     return "http://localhost:3000/api/rpc-proxy";
   }
   
-  // For production server-side rendering, we need to construct the URL
-  // This will be used during build time, so we'll default to the proxy path
+  // For production server-side rendering, we'll default to the proxy path
   return "/api/rpc-proxy";
 })();
+
+/**
+ * Fallback RPC endpoint for direct API calls
+ */
+export const FALLBACK_RPC_ENDPOINT = "https://api.chandrastation.com/rpc/gravity/";
 
 /**
  * Default REST endpoint with auth  

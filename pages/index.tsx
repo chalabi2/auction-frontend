@@ -5,7 +5,11 @@ import { useChain } from "@cosmos-kit/react";
 import { auction } from "@chalabi/gravity-bridgejs/dist/codegen";
 import { Auction } from "@chalabi/gravity-bridgejs/dist/codegen/auction/v1/auction";
 import { getDenominationInfo, formatTokenAmount } from "../config/denoms";
-import { createAuthEndpoint, DEFAULT_RPC_ENDPOINT } from "../config/auth";
+import {
+  createAuthEndpoint,
+  DEFAULT_RPC_ENDPOINT,
+  FALLBACK_RPC_ENDPOINT,
+} from "../config/auth";
 import { FaSyncAlt } from "react-icons/fa";
 import { HamburgerIcon } from "@chakra-ui/icons";
 
@@ -276,6 +280,8 @@ export default function Home() {
     onClose: onDrawerClose,
   } = useDisclosure();
 
+  const highestBidder = selectedAuction?.highestBid?.bidderAddress;
+
   const renderAuctionModal = () => (
     <Modal isOpen={isOpen} onClose={onClose}>
       <ModalOverlay />
@@ -383,7 +389,11 @@ export default function Home() {
             />
             <Tooltip label={disabledTooltipMessage}>
               <Button
-                isDisabled={!address || bidAmountInput === "0"}
+                isDisabled={
+                  !address ||
+                  bidAmountInput === "0" ||
+                  highestBidder === address
+                }
                 onClick={handleBidClick}
                 colorScheme="blue"
                 mb={6}
@@ -414,6 +424,8 @@ export default function Home() {
     ? "Connect your wallet to place a bid"
     : bidAmountInput === "0"
     ? "Bid amount must be greater than 0"
+    : highestBidder === address
+    ? "You are the highest bidder"
     : "";
 
   const { isOpen, onOpen, onClose } = useDisclosure();
