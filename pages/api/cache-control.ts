@@ -11,9 +11,14 @@ export default async function handler(
   const { method, query } = req;
 
   // Optional: Add basic authentication for cache control endpoints
-  const apiKey = process.env.API_KEY;
-  if (apiKey !== process.env.API_KEY) {
-    return res.status(500).json({ error: 'Server configuration error' });
+  const apiKey = process.env.API_KEY || 
+                 process.env.NEXT_PUBLIC_API_KEY || 
+                 process.env.VERCEL_API_KEY ||
+                 process.env.CHANDRASTATION_API_KEY;
+  
+  // Check if API key is configured (this was the bug - comparing same value to itself)
+  if (!apiKey) {
+    return res.status(500).json({ error: 'API key not configured' });
   }
 
   switch (method) {
