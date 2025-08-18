@@ -54,8 +54,13 @@ function CreateCosmosApp({ Component, pageProps }: AppProps) {
       ? restEndpointConfig.url
       : (restEndpointConfig as string);
 
-  console.log("ChainProvider RPC endpoint:", rpcEndpoint);
-  console.log("ChainProvider REST endpoint:", restEndpoint);
+  // Validate endpoints
+  if (!rpcEndpoint || !restEndpoint) {
+    console.error("Invalid endpoint configuration:", {
+      rpcEndpoint,
+      restEndpoint,
+    });
+  }
 
   return (
     <ChakraProvider theme={defaultTheme}>

@@ -29,7 +29,7 @@ export enum TxStatus {
 const txRaw = cosmos.tx.v1beta1.TxRaw;
 
 export const useTx = (chainName: string) => {
-  const { address, getSigningStargateClient, estimateFee } =
+  const { address, getSigningStargateClient, estimateFee, status } =
     useChain(chainName);
   const [responseEvents, setResponseEvents] = useState<readonly Event[] | null>(
     null
@@ -37,7 +37,7 @@ export const useTx = (chainName: string) => {
   const toaster = useToaster();
 
   const tx = async (msgs: Msg[], options: TxOptions) => {
-    if (!address) {
+    if (!address || status !== "Connected") {
       toaster.toast({
         type: ToastType.Error,
         title: "Wallet not connected",
@@ -54,6 +54,9 @@ export const useTx = (chainName: string) => {
       if (options?.fee) {
         fee = options.fee;
         client = await getSigningStargateClient();
+        if (!client) {
+          throw new Error("Failed to get signing client - client is null");
+        }
       } else {
         const [_fee, _client] = await Promise.all([
           estimateFee(msgs),
@@ -61,7 +64,11 @@ export const useTx = (chainName: string) => {
         ]);
         fee = _fee;
         client = _client;
+        if (!client) {
+          throw new Error("Failed to get signing client - client is null");
+        }
       }
+
       signed = await client.sign(address, msgs, fee, options.memo || "");
     } catch (e: any) {
       console.error(e);
