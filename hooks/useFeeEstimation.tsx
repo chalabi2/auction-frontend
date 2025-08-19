@@ -51,11 +51,6 @@ export const useFeeEstimation = (chainName: string) => {
           GasPrice.fromString(gasPrice + coin.base)
         );
 
-        console.log("Gas estimation:", {
-          estimated: gasEstimation,
-          final: Math.round(gasEstimation * modifier),
-        });
-
         return fee;
       } catch (simulationError) {
         console.warn(
@@ -70,7 +65,6 @@ export const useFeeEstimation = (chainName: string) => {
           GasPrice.fromString(gasPrice + coin.base)
         );
 
-        console.log("Using standard gas limit:", standardGasLimit);
         return fee;
       }
     } catch (err: any) {

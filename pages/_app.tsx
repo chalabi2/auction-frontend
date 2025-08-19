@@ -72,6 +72,7 @@ function CreateCosmosApp({ Component, pageProps }: AppProps) {
               rest: [restEndpoint],
             },
           },
+          isLazy: true,
         }}
         chains={[chain]}
         logLevel="NONE"
