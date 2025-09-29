@@ -433,6 +433,15 @@ export const chainDenoms: ChainDenominations = {
       logoURI: '',
       priceDenom: 'usk'
     },
+    "ibc/5B7B34C07642FAEAC81C04C488D5D622D7900600A9B37426EB0FA0B4D30AA9CE": {
+      name: 'ALTHEA',
+      denom: 'ibc/5B7B34C07642FAEAC81C04C488D5D622D7900600A9B37426EB0FA0B4D30AA9CE',
+      symbol: 'ALTHEA',
+      coinId: 'althea',
+      decimals: 18,
+      logoURI: '',
+      priceDenom: 'aalthea'
+    }
   };
   
   interface Denomination {
